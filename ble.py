@@ -38,6 +38,12 @@ DEBUG = True
 g_rx = bytes()
 g_tag = ""
 g_cli: BleakClient
+p_mod = "BLE"
+
+
+
+def pm(s):
+    print(f'{p_mod}: {s}')
 
 
 
@@ -58,48 +64,64 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def scan(timeout=SCAN_TIMEOUT_SECS):
+async def scan_slow(timeout=SCAN_TIMEOUT_SECS):
     # slow scan with no fast-quit
-    print(f'starting scan_slow for {timeout} seconds')
+    pm(f"scan_slow for {timeout} seconds")
     bs = BleakScanner()
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
-    print(bs.discovered_devices)
+    pm(bs.discovered_devices)
     # [BLEDevice(71:C5:75:B7:CB:7A, 71-C5-75-B7-CB-7A), BLEDev...
     return bs.discovered_devices
 
 
 
-async def scan_fast(mtf, timeout=SCAN_TIMEOUT_SECS):
+async def scan_fast_any_mac_in_list(
+        ls_macs_wanted,
+        timeout=SCAN_TIMEOUT_SECS
+):
 
     # just tell, do not act here
-    if ble_linux_is_mac_already_connected(mtf):
-        print('attempting scan_fast a mac that is already connected')
-        return None
+    ls_macs_wanted = [i.upper() for i in ls_macs_wanted]
+    for mtf in ls_macs_wanted:
+        if ble_linux_is_mac_already_connected(mtf):
+            pm(f'error: scan_fast_any_mac_in_list a mac that is already connected')
+            return None
 
-    # mtf: mac to find, bleak scans uppercase
-    mtf = mtf.upper()
     bs = BleakScanner()
     el = time.perf_counter()
 
+    # chunks for scan, must allow to get services at least once
+    n = int(timeout / 3)
+
+
     # loop with early quit
-    print(f'starting scan_fast for mac {mtf} for {timeout} seconds')
-    for i in range(int(timeout)):
+    pm(f'scan_fast_any_mac_in_list {ls_macs_wanted} for {timeout} seconds')
+    for i in range(n):
         await bs.start()
-        await asyncio.sleep(1)
+        await asyncio.sleep(3)
         await bs.stop()
-        ls_macs = [i.address for i in bs.discovered_devices]
+        ls_macs_discovered = [i.address for i in bs.discovered_devices]
+
         try:
-            idx = ls_macs.index(mtf)
-            el = int(time.perf_counter() - el)
-            print(f'fast_scan found mac {mtf} in {el} seconds')
-            return bs.discovered_devices[idx]
+            for m in ls_macs_discovered:
+                if m in ls_macs_wanted:
+                    idx = ls_macs_discovered.index(m)
+                    el = int(time.perf_counter() - el)
+                    pm(f'fast_scan found mac {m} in {el} seconds')
+                    return bs.discovered_devices[idx]
+
         except ValueError:
             # not in list
             continue
 
     return None
+
+
+
+async def scan_fast_one_mac(mtf, timeout=SCAN_TIMEOUT_SECS):
+    return await scan_fast_any_mac_in_list([mtf], timeout)
 
 
 
@@ -112,7 +134,7 @@ async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
 
     # dev might be None after a scan
     if not dev:
-        print('error: calling connect() with no dev')
+        pm('error: calling connect() with no dev')
         return False
 
     # retries embedded in bleak library
@@ -120,7 +142,7 @@ async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
         global g_cli
         g_cli = BleakClient(dev, timeout=20)
         el = time.perf_counter()
-        print(f"connecting to mac {dev.address}")
+        pm(f"connecting to mac {dev.address}")
         await g_cli.connect()
 
         # delay to negotiate connection parameters, if so
@@ -129,11 +151,11 @@ async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
 
         await g_cli.start_notify(UUID_T, _rx_cb)
         el = int(time.perf_counter() - el)
-        print(f"connected in {el} seconds")
+        pm(f"connected in {el} seconds")
         _gui_notification(f'connected to {dev.address}')
         return True
     except (Exception, ) as ex:
-        print(f'error: connect {ex}')
+        pm(f'error: connect {ex}')
 
 
 
@@ -142,10 +164,10 @@ async def disconnect():
     try:
         global g_cli
         await g_cli.disconnect()
-        print('disconnected cleanly')
+        pm('disconnected cleanly')
     except (Exception, ):
         # disconnection a bit and seem it failed
-        print('disconnected')
+        pm('disconnected')
 
 
 
@@ -227,26 +249,26 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     while is_connected() and time.perf_counter() < till:
         await asyncio.sleep(0.1)
         if _is_cmd_done():
-            print('->', g_rx)
+            print('-> {}', g_rx)
             return g_rx
 
     # debug command answer when errors
     e = f'error: _wait_ans cmd {g_tag} timeout {cmd_timeout}'
-    print("\033[91m {}\033[00m".format(e))
-    print("\t\033[91m g_rx: {}\033[00m".format(g_rx))
+    pm("\033[91m {}\033[00m".format(e))
+    pm("\t\033[91m g_rx: {}\033[00m".format(g_rx))
     if not g_rx:
         return []
 
     # detect extra errors when developing mobile app
     n = int(len(g_rx) / 2)
     if g_rx[:n] == g_rx[n:]:
-        print('-----------------------------------')
+        pm('-----------------------------------')
         e = 'error: duplicate answer {} \n' \
             'seems you used PWA recently \n' \
             'and Linux BLE stack got crazy, \n' \
             'just run $ systemctl restart bluetooth'
-        print('-----------------------------------')
-        print(e.format(g_rx))
+        pm('-----------------------------------')
+        pm(e.format(g_rx))
 
     # any other error
     return []
@@ -278,9 +300,9 @@ async def cmd(c: str, empty=True, timeout=DEF_TIMEOUT_CMD_SECS):
     try:
         return await _cmd()
     except ExceptionNotConnected:
-        print(f'error: not connected to send cmd {c}')
+        pm(f'error: not connected to send cmd {c}')
     except ExceptionCommand as ex:
-        print(f'error: sending cmd {c} -> {ex}')
+        pm(f'error: sending cmd {c} -> {ex}')
 
 
 
@@ -345,7 +367,7 @@ def _build_cmd(*args):
     to_send += chr(13)
 
     # debug
-    # print(to_send.encode())
+    # pm(to_send.encode())
 
     # know command tag, ex: 'STP'
     tag = c[:3]
@@ -511,18 +533,18 @@ async def cmd_dwl(file_size) -> tuple:
     # loop through receiving 2048 bytes chunks
     for i in range(n):
         if not is_connected():
-            print('error: DWL not connected')
+            pm('error: DWL not connected')
             return 1, g_rx
 
         try:
             c = 'DWL {:02x}{}\r'.format(len(str(i)), i)
             await g_cli.write_gatt_char(UUID_R, c.encode())
         except (Exception,) as ex:
-            print(f'error: DWL -> {ex}')
+            pm(f'error: DWL -> {ex}')
             return 1, g_rx
 
         # don't print progress too often or screws the download timing
-        print('DWL progress {:5.2f} %, chunk {}'.
+        pm('DWL progress {:5.2f} %, chunk {}'.
               format(100 * len(g_rx) / file_size, i))
 
         # share DL progress with other guys interested in it
@@ -543,11 +565,11 @@ async def cmd_dwl(file_size) -> tuple:
                 break
 
         if not ok:
-            print('error: DWL timeout')
+            pm('error: DWL timeout')
             break
 
     el = int(time.perf_counter() - el)
-    print(f'DWL speed {(file_size / el) / 1000} KB/s')
+    pm(f'DWL speed {(file_size / el) / 1000} KB/s')
     rv = 0 if file_size == len(g_rx) else 1
     return rv, g_rx
 
@@ -563,20 +585,20 @@ async def cmd_dwf(file_size) -> tuple:
     # r_set()
     last_n = 0
     el = time.perf_counter()
-    print(f'DWF: receiving file {file_size} bytes long')
+    pm(f'DWF: receiving file {file_size} bytes long')
     await g_cli.write_gatt_char(UUID_R, b'DWF \r')
 
 
     # receive whole file
     while 1:
         if not is_connected():
-            print('error: DWF disconnected while receiving file')
+            pm('error: DWF disconnected while receiving file')
             return 1, bytes()
 
         # don't print progress too often or screws download timing
         await asyncio.sleep(1)
         n = len(g_rx)
-        # print('DWF progress', '{:5.2f} %'.format(100 * n / file_size))
+        # pm('DWF progress', '{:5.2f} %'.format(100 * n / file_size))
         # r_set()
         if n == last_n or n == file_size:
             break
@@ -586,10 +608,10 @@ async def cmd_dwf(file_size) -> tuple:
     # report download result
     rv = 0 if n == file_size else 1
     if rv:
-        print(f'error: DWF received {n} bytes vs file_size {file_size}')
+        pm(f'error: DWF received {n} bytes vs file_size {file_size}')
     else:
         el = int(time.perf_counter()) - el
-        print(f'DWL speed {(file_size / el) / 1000} KB/s')
+        pm(f'DWL speed {(file_size / el) / 1000} KB/s')
     return rv, n
 
 
@@ -651,9 +673,9 @@ async def cmd_gcc():
     if ok:
         return 0, rv.decode()
     if rv:
-        print(f'error: bad GCC length {len(rv)} - 6 != {n} - 6')
+        pm(f'error: bad GCC length {len(rv)} - 6 != {n} - 6')
     else:
-        print(f'error: bad GCC length = None')
+        pm(f'error: bad GCC length = None')
     return 1, ""
 
 
@@ -897,7 +919,7 @@ async def cmd_rli():
     info = {}
     all_ok = True
     for each in ['SN', 'BA', 'CA']:
-        print(f'RLI doing {each}')
+        pm(f'RLI doing {each}')
         c, _ = _build_cmd(LOGGER_INFO_CMD, each)
         # Nick wanted this timeout
         rv = await cmd(c, timeout=5)
@@ -907,7 +929,7 @@ async def cmd_rli():
             try:
                 info[each] = rv.decode()[6:]
             except (Exception,) as ex:
-                print(f'error_rli: {ex}')
+                pm(f'error_rli: {ex}')
                 return 1, info
         await asyncio.sleep(.1)
     if all_ok:
@@ -922,7 +944,7 @@ async def cmd_rst():
         await g_cli.write_gatt_char(UUID_R, b'RST \r')
         time.sleep(3)
     except (Exception,) as _ex:
-        print('exception during RST command')
+        pm('exception during RST command')
 
 
 
@@ -1137,7 +1159,7 @@ async def cmd_xod():
 #     # time() -> seconds since epoch, in UTC
 #     rerun = int(rerun)
 #     dt = datetime.fromtimestamp(time.time(), tz=timezone.utc)
-#     print(f"debug: DDB sent {rerun}{dt.strftime('%Y/%m/%d %H:%M:%S')}")
+#     pm(f"debug: DDB sent {rerun}{dt.strftime('%Y/%m/%d %H:%M:%S')}")
 #     c, _ = _build_cmd('__B', f"{rerun}{dt.strftime('%Y/%m/%d %H:%M:%S')}")
 #     await cmd(c)
 #     rv = await self._ans_wait()
@@ -1155,25 +1177,27 @@ async def main():
     mac_test = "F0:5E:CD:25:92:EA" # CTD
 
     # ls_dev = await scan()
-    # print(ls_dev)
+    # pm(ls_dev)
 
-    dev = await scan_fast(mac_test)
-    rv = await connect(dev)
-    if not rv:
-        return
+    dev = await scan_fast_one_mac(mac_test)
+    print(dev)
+
+    # rv = await connect(dev)
+    # if not rv:
+    #     return
 
     # rv = await cmd_mts()
-    # print(rv)
+    # pm(rv)
 
     # rv = await cmd_dir()
-    # print(rv)
+    # pm(rv)
 
     rv = await cmd_dwg('dummy_946717645.lid')
-    print(rv)
+    pm(rv)
 
     rv = await cmd_dwl(77950)
     # rv = await cmd_dwf(77950)
-    print(rv)
+    pm(rv)
 
 
     await disconnect()
