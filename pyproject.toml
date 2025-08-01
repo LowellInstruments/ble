@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "ble"
+version = "0.1.0"
+description = "BLE library for Lowell Instruments"
+dependencies = [
+    "bleak",
+    "humanize"
+]
