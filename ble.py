@@ -64,7 +64,7 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def scan_slow(timeout=SCAN_TIMEOUT_SECS):
+async def ble_scan_slow(timeout=SCAN_TIMEOUT_SECS):
     # slow scan with no fast-quit
     pm(f"scan_slow for {timeout} seconds")
     bs = BleakScanner()
@@ -1209,22 +1209,22 @@ async def main():
     # rv = await cmd_dwf(77950)
     # pm(rv)
 
-    for i in range(5):
-        rv = await cmd_gst()
-        pm(f'GST = {rv}')
-
-    print('\n\n')
-
-    for i in range(5):
-        rv = await cmd_gsp()
-        pm(f'GSP = {rv}')
-
-    print('\n\n')
-
-
+    # for i in range(5):
+    #     rv = await cmd_gst()
+    #     pm(f'GST = {rv}')
+    #
+    # print('\n\n')
+    #
+    # for i in range(5):
+    #     rv = await cmd_gsp()
+    #     pm(f'GSP = {rv}')
+    #
+    # print('\n\n')
 
 
-    for i in range(5):
+
+
+    for i in range(1):
         rv = await cmd_gsc()
         pm(f'GSC = {rv}')
 
