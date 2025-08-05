@@ -126,7 +126,12 @@ async def scan_fast_one_mac(mtf, timeout=SCAN_TIMEOUT_SECS):
 
 
 def is_connected():
-    return g_cli and g_cli.is_connected
+    try:
+        # just check is defined
+        g_cli
+        return g_cli and g_cli.is_connected
+    except NameError:
+        return False
 
 
 
@@ -249,7 +254,7 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     while is_connected() and time.perf_counter() < till:
         await asyncio.sleep(0.1)
         if _is_cmd_done():
-            print('-> {}', g_rx)
+            print(f'-> {g_rx}')
             return g_rx
 
     # debug command answer when errors
@@ -1173,8 +1178,9 @@ async def cmd_xod():
 
 async def main():
 
+    # mac_test = "F0:5E:CD:25:92:EA" # CTD home
     # mac_test = "D0:2E:AB:D9:29:48" # TDO
-    mac_test = "F0:5E:CD:25:92:EA" # CTD
+    mac_test = "F0:5E:CD:25:95:E0" # CTD office
 
     # ls_dev = await scan()
     # pm(ls_dev)
@@ -1182,9 +1188,13 @@ async def main():
     dev = await scan_fast_one_mac(mac_test)
     print(dev)
 
-    # rv = await connect(dev)
-    # if not rv:
-    #     return
+    if not dev:
+        pm(f'error: not found {mac_test} during scan')
+        return
+
+    rv = await connect(dev)
+    if not rv:
+        return
 
     # rv = await cmd_mts()
     # pm(rv)
@@ -1192,12 +1202,32 @@ async def main():
     # rv = await cmd_dir()
     # pm(rv)
 
-    rv = await cmd_dwg('dummy_946717645.lid')
-    pm(rv)
-
-    rv = await cmd_dwl(77950)
+    # rv = await cmd_dwg('dummy_946717645.lid')
+    # pm(rv)
+    #
+    # rv = await cmd_dwl(77950)
     # rv = await cmd_dwf(77950)
-    pm(rv)
+    # pm(rv)
+
+    for i in range(5):
+        rv = await cmd_gst()
+        pm(f'GST = {rv}')
+
+    print('\n\n')
+
+    for i in range(5):
+        rv = await cmd_gsp()
+        pm(f'GSP = {rv}')
+
+    print('\n\n')
+
+
+
+
+    for i in range(5):
+        rv = await cmd_gsc()
+        pm(f'GSC = {rv}')
+
 
 
     await disconnect()

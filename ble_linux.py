@@ -1,4 +1,5 @@
 import subprocess as sp
+import time
 
 
 
@@ -10,6 +11,49 @@ p_mod = 'BLE'
 
 def pm(s):
     print(f'{p_mod}: {s}')
+
+
+
+def ble_linux_reset_antenna(h: int):
+    c = f"sudo hciconfig hci{h} reset"
+    sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+
+
+def ble_linux_detect_devices_left_connected_ll():
+
+    # on bad bluetooth state, this takes a long time
+    c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    if rv.returncode == 124:
+        print(f'error: ble_mat_detect_devices_left_connected_ll timeouted')
+
+    if rv.returncode == 1:
+        # no devices found connected
+        return 0
+
+    c = 'bluetoothctl info'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
+        b = '\tName: {}'.format(lg_type).encode()
+        if b in rv.stdout:
+            print('ble_mat_detect_devices_left_connected_ll: some connected')
+            return 1
+
+    return 0
+
+
+
+def ble_linux_check_antenna_up_n_running(h_idx: int):
+    # for up to 10 seconds, read the BLE interfaces state
+    for i in range(10):
+        cr = f"hciconfig hci{h_idx} | grep 'UP RUNNING'"
+        rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+        if rv.returncode == 0:
+            return True
+        time.sleep(1)
 
 
 
@@ -41,7 +85,7 @@ def _ble_linux_count_interfaces() -> int:
 
 
 
-def _ble_linux_get_type_of_interface(i) -> str:
+def ble_linux_get_type_of_interface(i) -> str:
     cb = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rvb = sp.run(cb, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     if rvb == 0:
@@ -60,13 +104,13 @@ def _ble_linux_find_this_type_of_interface(s) -> int:
     assert s in ('internal', 'external')
     n = _ble_linux_count_interfaces()
     for i in range(n):
-        if _ble_linux_get_type_of_interface(i) == s:
+        if ble_linux_get_type_of_interface(i) == s:
             return i
     return -1
 
 
 
-def ble_linux_find_best_interface():
+def ble_linux_find_best_interface() -> int:
     i = _ble_linux_find_this_type_of_interface('external')
     if i != -1:
         pm(f'using external interface hci{i}')
