@@ -70,7 +70,7 @@ async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
-    pm(bs.discovered_devices)
+    # pm(bs.discovered_devices)
     # [BLEDevice(71:C5:75:B7:CB:7A, 71-C5-75-B7-CB-7A), BLEDev...
     return bs.discovered_devices
 
