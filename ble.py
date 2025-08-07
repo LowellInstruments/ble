@@ -64,10 +64,9 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def ble_scan_slow(timeout=SCAN_TIMEOUT_SECS):
-    # slow scan with no fast-quit
+async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     pm(f"scan_slow for {timeout} seconds")
-    bs = BleakScanner()
+    bs = BleakScanner(adapter=adapter)
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
@@ -77,10 +76,15 @@ async def ble_scan_slow(timeout=SCAN_TIMEOUT_SECS):
 
 
 
-async def scan_fast_any_mac_in_list(
+async def ble_scan_fast_any_mac_in_list(
         ls_macs_wanted,
+        adapter='hci0',
         timeout=SCAN_TIMEOUT_SECS
 ):
+
+
+    # todo: do we need to check if already connected with adapter?
+    # todo: try to connect to one with hci1 and see if it lists othem
 
     # just tell, do not act here
     ls_macs_wanted = [i.upper() for i in ls_macs_wanted]
@@ -89,7 +93,7 @@ async def scan_fast_any_mac_in_list(
             pm(f'error: scan_fast_any_mac_in_list a mac that is already connected')
             return None
 
-    bs = BleakScanner()
+    bs = BleakScanner(adapter=adapter)
     el = time.perf_counter()
 
     # chunks for scan, must allow to get services at least once
@@ -120,8 +124,8 @@ async def scan_fast_any_mac_in_list(
 
 
 
-async def scan_fast_one_mac(mtf, timeout=SCAN_TIMEOUT_SECS):
-    return await scan_fast_any_mac_in_list([mtf], timeout)
+async def scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
+    return await ble_scan_fast_any_mac_in_list([mtf], adapter, timeout)
 
 
 
