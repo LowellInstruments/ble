@@ -14,6 +14,15 @@ def pm(s):
 
 
 
+def ble_linux_get_bluez_version() -> str:
+    c = 'bluetoothctl -v'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    v = rv.stdout.decode()
+    # v: b'bluetoothctl: 5.55\n'
+    return str(v.replace('\n', '').split(': ')[1])
+
+
+
 def ble_linux_reset_antenna(h: int):
     c = f"sudo hciconfig hci{h} reset"
     sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -39,7 +48,6 @@ def ble_linux_detect_devices_left_connected_ll():
     for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
         b = '\tName: {}'.format(lg_type).encode()
         if b in rv.stdout:
-            print('ble_mat_detect_devices_left_connected_ll: some connected')
             return 1
 
     return 0
@@ -52,8 +60,35 @@ def ble_linux_check_antenna_up_n_running(h_idx: int):
         cr = f"hciconfig hci{h_idx} | grep 'UP RUNNING'"
         rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
         if rv.returncode == 0:
-            return True
+            return 0
         time.sleep(1)
+    return 1
+
+
+
+def ble_linux_some_devices_forgot_connected():
+
+    # on bad bluetooth state, this takes long time
+    c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    if rv.returncode == 124:
+        print(f'error, ble_linux_some_devices_forgot_connected timeouted')
+
+    if rv.returncode == 1:
+        # no devices found connected
+        return None
+
+    c = 'bluetoothctl info'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
+        b = f'\tName: {lg_type}'.encode()
+        if b in rv.stdout:
+            print('ble_linux_some_devices_forgot_connected: some connected')
+            return lg_type
+
+    return None
 
 
 
@@ -69,10 +104,17 @@ def ble_linux_disconnect_by_mac(mac: str):
     # disconnect at bluez level
     if not ble_linux_is_mac_already_connected(mac):
         return
-    c = f'bluetoothctl disconnect {mac}'
+    c = f'timeout 2 bluetoothctl disconnect {mac}'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     if rv == 0:
         print('mac was already connected, disconnecting')
+
+
+
+def ble_linux_disconnect_all():
+    # disconnect at bluez level
+    c = f'timeout 5 bluetoothctl disconnect'
+    return sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
 
 
 

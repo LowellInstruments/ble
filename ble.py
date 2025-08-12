@@ -65,7 +65,6 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
-    pm(f"scan_slow for {timeout} seconds")
     bs = BleakScanner(adapter=adapter)
     await bs.start()
     await asyncio.sleep(timeout)
@@ -81,10 +80,6 @@ async def ble_scan_fast_any_mac_in_list(
         adapter='hci0',
         timeout=SCAN_TIMEOUT_SECS
 ):
-
-
-    # todo: do we need to check if already connected with adapter?
-    # todo: try to connect to one with hci1 and see if it lists othem
 
     # just tell, do not act here
     ls_macs_wanted = [i.upper() for i in ls_macs_wanted]
@@ -151,7 +146,6 @@ async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
         global g_cli
         g_cli = BleakClient(dev, timeout=20)
         el = time.perf_counter()
-        pm(f"connecting to mac {dev.address}")
         await g_cli.connect()
 
         # delay to negotiate connection parameters, if so
