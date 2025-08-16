@@ -128,10 +128,12 @@ def _ble_linux_count_interfaces() -> int:
 
 
 def ble_linux_get_type_of_interface(i) -> str:
+    # probe external ones first
     cb = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rvb = sp.run(cb, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     if rvb == 0:
         return 'external'
+
     ci = f'hciconfig -a hci{i} | grep Manufacturer | grep Intel'
     cc = f'hciconfig -a hci{i} | grep Manufacturer | grep Cypress'
     rvi = sp.run(ci, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
@@ -142,7 +144,7 @@ def ble_linux_get_type_of_interface(i) -> str:
 
 
 
-def _ble_linux_find_this_type_of_interface(s) -> int:
+def ble_linux_find_this_type_of_interface(s) -> int:
     assert s in ('internal', 'external')
     n = _ble_linux_count_interfaces()
     for i in range(n):
@@ -153,11 +155,11 @@ def _ble_linux_find_this_type_of_interface(s) -> int:
 
 
 def ble_linux_find_best_interface() -> int:
-    i = _ble_linux_find_this_type_of_interface('external')
+    i = ble_linux_find_this_type_of_interface('external')
     if i != -1:
         pm(f'using external interface hci{i}')
     else:
-        i = _ble_linux_find_this_type_of_interface('internal')
+        i = ble_linux_find_this_type_of_interface('internal')
         if i != -1:
             pm(f'using internal interface hci{i}')
         else:
