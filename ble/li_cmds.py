@@ -62,4 +62,4 @@ FIRST_DEPLOYMENT_GET_CMD = 'FDG'
 
 
 # alternative to redis so we don't have to import it
-DEV_SHM_DL_PROGRESS = '/dev/shm/ble:dl_progress'
+DEV_SHM_DL_PROGRESS = '/dev/shm/ble_dl_progress'

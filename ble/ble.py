@@ -9,8 +9,9 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-from ble_linux import ble_linux_is_mac_already_connected
-from li_cmds import *
+
+from ble.ble_linux import ble_linux_is_mac_already_connected
+from ble.li_cmds import *
 
 
 
@@ -520,7 +521,7 @@ async def cmd_dwg(s):
 
 
 
-# download a file in slow mode
+# download a file in SLOW mode
 # does NOT use function cmd()
 async def cmd_dwl(file_size) -> tuple:
 
@@ -546,13 +547,16 @@ async def cmd_dwl(file_size) -> tuple:
             pm(f'error: DWL -> {ex}')
             return 1, g_rx
 
+
         # don't print progress too often or screws the download timing
         pm('DWL progress {:5.2f} %, chunk {}'.
               format(100 * len(g_rx) / file_size, i))
 
+
         # share DL progress with other guys interested in it
         with open(DEV_SHM_DL_PROGRESS, 'w') as f:
-            f.write('{:5.2f}'.format(n / file_size))
+            v = '{:5.2f}'.format(100 * len(g_rx) / file_size, i)
+            f.write(str(v))
 
         # download using DWL command (~7 KB/s when no connection update)
         ok = 0
@@ -571,14 +575,17 @@ async def cmd_dwl(file_size) -> tuple:
             pm('error: DWL timeout')
             break
 
-    el = int(time.perf_counter() - el)
+    el = int(time.perf_counter() - el) or 1
     pm(f'DWL speed {(file_size / el) / 1000} KB/s')
     rv = 0 if file_size == len(g_rx) else 1
+    if rv == 0:
+        with open(DEV_SHM_DL_PROGRESS, 'w') as f:
+            f.write('100')
     return rv, g_rx
 
 
 
-# download a file in fast mode
+# download a file in FAST mode
 # does NOT use function cmd()
 async def cmd_dwf(file_size) -> tuple:
 
@@ -1162,7 +1169,7 @@ async def cmd_xod():
 #     # time() -> seconds since epoch, in UTC
 #     rerun = int(rerun)
 #     dt = datetime.fromtimestamp(time.time(), tz=timezone.utc)
-#     pm(f"debug: DDB sent {rerun}{dt.strftime('%Y/%m/%d %H:%M:%S')}")
+#     pm(f"debug, DDB sent {rerun}{dt.strftime('%Y/%m/%d %H:%M:%S')}")
 #     c, _ = _build_cmd('__B', f"{rerun}{dt.strftime('%Y/%m/%d %H:%M:%S')}")
 #     await cmd(c)
 #     rv = await self._ans_wait()

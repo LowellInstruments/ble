@@ -61,7 +61,6 @@ def ble_linux_check_antenna_up_n_running(h_idx: int):
         rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
         if rv.returncode == 0:
             return 0
-        time.sleep(1)
     return 1
 
 
