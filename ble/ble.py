@@ -9,14 +9,13 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-
 from ble.ble_linux import ble_linux_is_mac_already_connected
 from ble.li_cmds import *
 
 
 
 # =========================================
-# new bleak v1.0 compliant lowell library
+# new bleak-v1.0-compliant Lowell library
 # this also works with old v0.2
 # =========================================
 
@@ -1183,9 +1182,10 @@ async def cmd_xod():
 
 async def main():
 
-    # mac_test = "F0:5E:CD:25:92:EA" # CTD home
+    mac_test = "F0:5E:CD:25:92:EA" # CTD home
     # mac_test = "D0:2E:AB:D9:29:48" # TDO
-    mac_test = "F0:5E:CD:25:95:E0" # CTD office
+    # mac_test = "F0:5E:CD:25:95:E0" # CTD office
+
 
     # ls_dev = await scan()
     # pm(ls_dev)
@@ -1229,9 +1229,10 @@ async def main():
 
 
 
-    for i in range(1):
+    for i in range(10900):
         rv = await cmd_gsc()
         pm(f'GSC = {rv}')
+        time.sleep(1)
 
 
 
