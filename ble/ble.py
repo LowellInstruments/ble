@@ -9,8 +9,8 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-from ble_linux import ble_linux_is_mac_already_connected
-from li_cmds import *
+from .ble_linux import ble_linux_is_mac_already_connected
+from .li_cmds import *
 
 
 
