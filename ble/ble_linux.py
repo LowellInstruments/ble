@@ -54,7 +54,7 @@ def ble_linux_detect_devices_left_connected_ll():
 
 
 
-def ble_linux_check_antenna_up_n_running(h_idx: int):
+def ble_linux_is_antenna_up_n_running(h_idx: int):
     # for up to 10 seconds, read the BLE interfaces state
     for i in range(10):
         cr = f"hciconfig hci{h_idx} | grep 'UP RUNNING'"
