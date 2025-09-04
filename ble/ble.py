@@ -1180,7 +1180,7 @@ async def cmd_xod():
 
 
 
-async def main():
+async def main_ble():
 
     mac_test = "F0:5E:CD:25:92:EA" # CTD home
     # mac_test = "D0:2E:AB:D9:29:48" # TDO
@@ -1241,5 +1241,3 @@ async def main():
 
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
