@@ -174,6 +174,30 @@ async def disconnect():
 
 
 
+async def connect_by_mac(mac: str, conn_update=False) -> Optional[bool]:
+
+    # retries embedded in bleak library
+    try:
+        global g_cli
+        g_cli = BleakClient(mac, timeout=20)
+        el = time.perf_counter()
+        await g_cli.connect()
+
+        # delay to negotiate connection parameters, if so
+        if conn_update:
+            await asyncio.sleep(1)
+
+        await g_cli.start_notify(UUID_T, _rx_cb)
+        el = int(time.perf_counter() - el)
+        pm(f"connected in {el} seconds")
+        _gui_notification(f'connected to {mac}')
+        return True
+    except (Exception, ) as ex:
+        pm(f'error: connect {ex}')
+
+
+
+
 def _is_cmd_done():
     c = g_tag
 
