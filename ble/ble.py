@@ -39,6 +39,19 @@ g_rx = bytes()
 g_tag = ""
 g_cli: BleakClient
 p_mod = "BLE"
+g_print_cmd = False
+
+
+
+def _print_cmd_flow(v):
+    if g_print_cmd:
+        print(v)
+
+
+
+def set_print_cmd_flow(b: bool):
+    global g_print_cmd
+    g_print_cmd = b
 
 
 
@@ -247,6 +260,8 @@ def _is_cmd_done():
         'RLI',
         RUN_CMD,
         RWS_CMD,
+        'SCC',
+        'SCF',
         'SPN',
         'SSP',
         'STM',
@@ -276,8 +291,9 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     while is_connected() and time.perf_counter() < till:
         await asyncio.sleep(0.1)
         if _is_cmd_done():
-            print(f'-> {g_rx}')
+            _print_cmd_flow(f'-> {g_rx}')
             return g_rx
+
 
     # debug command answer when errors
     e = f'error: _wait_ans cmd {g_tag} timeout {cmd_timeout}'
@@ -285,6 +301,7 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     pm("\t\033[91m g_rx: {}\033[00m".format(g_rx))
     if not g_rx:
         return []
+
 
     # detect extra errors when developing mobile app
     n = int(len(g_rx) / 2)
@@ -314,7 +331,7 @@ async def cmd(c: str, empty=True, timeout=DEF_TIMEOUT_CMD_SECS):
         if empty:
             global g_rx
             g_rx = bytes()
-        print('<-', c)
+        _print_cmd_flow(f'<- {c}')
         try:
             await g_cli.write_gatt_char(UUID_R, c.encode())
 
@@ -799,6 +816,7 @@ async def cmd_gsp():
     rv = await cmd(c)
     # rv: GSP 04ABCD
     ok = rv and len(rv) == 10 and rv.startswith(b'GSP')
+
     if not ok:
         return 1, 0
     a = rv
@@ -822,6 +840,7 @@ async def cmd_gst():
     ok = rv and len(rv) == 10 and rv.startswith(b'GST')
     if not ok:
         return 1,0
+
     a = rv
     # a: b'GST 043412'
     if a and len(a.split()) == 2:
