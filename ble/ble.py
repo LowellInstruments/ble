@@ -802,11 +802,12 @@ async def cmd_glt():
 
 # Get Sensor Conductivity
 async def cmd_gsc():
+    # rv: GSC 101234567890ABCDEF
     rv = await cmd('GSC \r')
-    ok = rv and rv.startswith(b'GSC')
+    ok = rv and len(rv) == 22 and rv.startswith(b'GSC')
     if not ok:
         return 1, 0
-    return 0, 1234
+    return 0, rv[6:]
 
 
 
@@ -1223,20 +1224,62 @@ async def cmd_xod():
 
 
 
+async def main_ble_tdo():
+
+    mac = "F0:5E:CD:25:92:F1"
+    # mac = "F0:5E:CD:25:92:95"
+
+
+    dev = await scan_fast_one_mac(mac)
+    print(dev)
+
+    if not dev:
+        pm(f'error: not found {mac} during scan')
+        return
+
+    rv = await connect(dev)
+    if not rv:
+        return
+
+    # await cmd_gsp()
+    # await cmd_gst()
+
+
+    await cmd_frm()
+    time.sleep(1)
+    await cmd_stm()
+    g = ("-3.333333", "-4.444444", None, None)
+    # await cmd_sws(g)
+
+    await cmd_rws(g)
+
+
+
+
+
+    await disconnect()
+
+
+
+
+
 async def main_ble_ctd():
 
-    mac_test = "F0:5E:CD:25:92:EA" # CTD home
-    # mac_test = "F0:5E:CD:25:95:E0" # CTD office
+    # mac = "F0:5E:CD:25:92:EA"     # number 1
+    # mac = "F0:5E:CD:25:95:E0"     # number 2
+    # mac = "F0:5E:CD:25:95:D4"     # number 3
+    # mac = "F0:5E:CD:25:A4:21"     # number 4
+    mac = "F0:5E:CD:25:A1:30"       # number 5
 
 
     # ls_dev = await scan()
     # pm(ls_dev)
 
-    dev = await scan_fast_one_mac(mac_test)
+    dev = await scan_fast_one_mac(mac)
     print(dev)
 
     if not dev:
-        pm(f'error: not found {mac_test} during scan')
+        pm(f'error: not found {mac} during scan')
         return
 
     rv = await connect(dev)
@@ -1268,46 +1311,20 @@ async def main_ble_ctd():
     #
     # print('\n\n')
 
-
-
-
-    for i in range(10900):
-        rv = await cmd_gsc()
-        pm(f'GSC = {rv}')
-        time.sleep(1)
-
-
-
-    await disconnect()
-
-
-
-async def main_ble_tdo():
-    mac = "F0:5E:CD:25:92:95"
-
-    dev = await scan_fast_one_mac(mac)
-    print(dev)
-
-    if not dev:
-        pm(f'error: not found {mac} during scan')
-        return
-
-    rv = await connect(dev)
-    if not rv:
-        return
-
-
     await cmd_frm()
-    time.sleep(1)
 
-    await cmd_stm()
-    g = ("-3.333333", "-4.444444", None, None)
-    await cmd_rws(g)
+    await cmd_gsp()
+    await cmd_gst()
+    rv = await cmd_gsc()
+    print('rv_gsc', rv)
+
+    # for i in range(10900):
+    #     rv = await cmd_gsc()
+    #     pm(f'GSC = {rv}')
+    #     time.sleep(1)
 
 
 
     await disconnect()
-
-
 
 
