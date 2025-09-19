@@ -785,6 +785,7 @@ async def cmd_gdx():
 async def cmd_gfv():
     rv = await cmd('GFV \r')
     ok = rv and len(rv) == 12 and rv.startswith(b'GFV')
+    print('mygfv', rv)
     if not ok:
         return 1, ''
     return 0, rv[6:].decode()
@@ -1226,8 +1227,14 @@ async def cmd_xod():
 
 async def main_ble_tdo():
 
-    mac = "F0:5E:CD:25:92:F1"
-    # mac = "F0:5E:CD:25:92:95"
+    n = input('enter TDO board number you want to test -> ')
+    d = {
+        '0': "F0:5E:CD:25:92:F1",
+        '1': "F0:5E:CD:25:A1:16",
+        '3': "F0:5E:CD:25:92:95"
+    }
+    mac = d[n]
+    print(f'testing TDO #{n}, mac = {mac}')
 
 
     dev = await scan_fast_one_mac(mac)
@@ -1241,21 +1248,20 @@ async def main_ble_tdo():
     if not rv:
         return
 
+    g = ("-3.333333", "-4.444444", None, None)
+    # await cmd_sws(g)
+    # await cmd_dir()
+    # await cmd_dwg('2508701_LAB_20250919_165930.lid')
+    # bb = await cmd_dwl(28928)
+
     # await cmd_gsp()
     # await cmd_gst()
 
 
+    await cmd_stm()
     await cmd_frm()
     time.sleep(1)
-    await cmd_stm()
-    g = ("-3.333333", "-4.444444", None, None)
-    # await cmd_sws(g)
-
     await cmd_rws(g)
-
-
-
-
 
     await disconnect()
 
@@ -1265,11 +1271,16 @@ async def main_ble_tdo():
 
 async def main_ble_ctd():
 
-    # mac = "F0:5E:CD:25:92:EA"     # number 1
-    # mac = "F0:5E:CD:25:95:E0"     # number 2
-    # mac = "F0:5E:CD:25:95:D4"     # number 3
-    # mac = "F0:5E:CD:25:A4:21"     # number 4
-    mac = "F0:5E:CD:25:A1:30"       # number 5
+    n = input('enter CTD board number you want to test -> ')
+    d = {
+        '1': "F0:5E:CD:25:92:EA",
+        '2': "F0:5E:CD:25:95:E0",
+        '3': "F0:5E:CD:25:95:D4",
+        '4': "F0:5E:CD:25:A4:21",
+        '5': "F0:5E:CD:25:A1:30"
+    }
+    mac = d[n]
+    print(f'testing CTD #{n}, mac = {mac}')
 
 
     # ls_dev = await scan()
@@ -1286,42 +1297,19 @@ async def main_ble_ctd():
     if not rv:
         return
 
-    # rv = await cmd_mts()
-    # pm(rv)
-
-    # rv = await cmd_dir()
-    # pm(rv)
-
-    # rv = await cmd_dwg('dummy_946717645.lid')
-    # pm(rv)
-    #
-    # rv = await cmd_dwl(77950)
-    # rv = await cmd_dwf(77950)
-    # pm(rv)
-
-    # for i in range(5):
-    #     rv = await cmd_gst()
-    #     pm(f'GST = {rv}')
-    #
-    # print('\n\n')
-    #
-    # for i in range(5):
-    #     rv = await cmd_gsp()
-    #     pm(f'GSP = {rv}')
-    #
-    # print('\n\n')
-
     await cmd_frm()
 
-    await cmd_gsp()
-    await cmd_gst()
-    rv = await cmd_gsc()
-    print('rv_gsc', rv)
+    # await cmd_wli('SN2222222')
+    # await cmd_stm()
+    # await cmd_fds()
+    # await cmd_dns('LAB')
+    # g = ("-3.333333", "-4.444444", None, None)
+    # await cmd_rws(g)
 
-    # for i in range(10900):
-    #     rv = await cmd_gsc()
-    #     pm(f'GSC = {rv}')
-    #     time.sleep(1)
+    for i in range(10900):
+        rv = await cmd_gsc()
+        pm(f'GSC = {rv}')
+        time.sleep(1)
 
 
 
