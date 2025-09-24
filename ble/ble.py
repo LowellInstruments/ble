@@ -241,6 +241,7 @@ def _is_cmd_done():
         'GCF',
         'GDO',
         'GDX',
+        'GEC',
         'GFV',
         'GLT',
         'GSC',
@@ -785,7 +786,6 @@ async def cmd_gdx():
 async def cmd_gfv():
     rv = await cmd('GFV \r')
     ok = rv and len(rv) == 12 and rv.startswith(b'GFV')
-    print('mygfv', rv)
     if not ok:
         return 1, ''
     return 0, rv[6:].decode()
@@ -797,7 +797,9 @@ async def cmd_glt():
     rv = await cmd('GLT \r')
     ok = rv and rv in (b'GLT DO1', b'GLT DO2', b'GLT TDO', b'GLT CTD')
     # rv: b'ERR' in loggers not supporting this command
-    return (0, rv.decode()[-3:]) if ok else (1, None)
+    if ok:
+        return 0, rv.decode()[-3:]
+    return 1, None
 
 
 
@@ -925,6 +927,16 @@ async def cmd_mac():
     rv = await cmd('MAC \r')
     # rv: b'MAC 11D0:2E:AB:D9:29:48'
     ok = rv and len(rv) == 23 and rv.startswith(b'MAC')
+    if ok:
+        return 0, rv[6:].decode()
+    return 1, ''
+
+
+
+# gets logger error count
+async def cmd_gec():
+    rv = await cmd('GEC \r')
+    ok = rv and rv.startswith(b'GEC')
     if ok:
         return 0, rv[6:].decode()
     return 1, ''

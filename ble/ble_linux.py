@@ -92,7 +92,7 @@ def ble_linux_some_devices_forgot_connected():
 
 def ble_linux_is_mac_already_connected(mac: str):
     # check at bluez level
-    c = f'bluetoothctl devices Connected | grep {mac.upper()}'
+    c = f'bluetoothctl info | grep {mac.upper()}'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     return rv == 0
 
