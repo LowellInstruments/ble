@@ -268,6 +268,7 @@ def _is_cmd_done():
         'MUX',
         'OAD',
         'OAF',
+        'OSC',
         'RFN',
         'RLI',
         RUN_CMD,
@@ -963,6 +964,18 @@ async def cmd_mux():
     if ok:
         return 0, rv[6:].decode()
     return 1, ''
+
+
+
+
+# conductivity oscillator toggle
+async def cmd_osc():
+    rv = await cmd('OSC \r')
+    ok = rv and rv.startswith(b'OSC')
+    if ok:
+        return 0, rv[6:].decode()
+    return 1, ''
+
 
 
 
