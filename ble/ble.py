@@ -265,6 +265,7 @@ def _is_cmd_done():
         'LOG',
         'MAC',
         'MTS',
+        'MUX',
         'OAD',
         'OAF',
         'RFN',
@@ -346,7 +347,9 @@ async def cmd(c: str, empty=True, timeout=DEF_TIMEOUT_CMD_SECS):
         try:
             await g_cli.write_gatt_char(UUID_R, c.encode())
 
+            # -----------------------------------------
             # check the answer to know it has finished
+            # -----------------------------------------
             return await _wait_until_cmd_is_done(timeout)
         except (Exception,) as _ex:
             raise ExceptionCommand(_ex)
@@ -950,6 +953,17 @@ async def cmd_gec():
     if ok:
         return 0, rv[6:].decode()
     return 1, ''
+
+
+
+# route multiplexer
+async def cmd_mux():
+    rv = await cmd('MUX \r')
+    ok = rv and rv.startswith(b'MUX')
+    if ok:
+        return 0, rv[6:].decode()
+    return 1, ''
+
 
 
 
