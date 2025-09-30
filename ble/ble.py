@@ -1,3 +1,5 @@
+import platform
+
 import asyncio
 import datetime
 import json
@@ -192,7 +194,14 @@ async def connect_by_mac(mac: str, conn_update=False) -> Optional[bool]:
     # retries embedded in bleak library
     try:
         global g_cli
-        g_cli = BleakClient(mac, timeout=20)
+        if platform.system() != 'Darwin':
+            g_cli = BleakClient(mac, timeout=20)
+        else:
+            dev = await BleakScanner.find_device_by_address(mac, cb={"use_bdaddr": True})
+            if not dev:
+                return False
+            g_cli = BleakClient(dev, timeout=20)
+
         el = time.perf_counter()
         await g_cli.connect()
 
@@ -207,6 +216,7 @@ async def connect_by_mac(mac: str, conn_update=False) -> Optional[bool]:
         return True
     except (Exception, ) as ex:
         pm(f'error: connect {ex}')
+
 
 
 
