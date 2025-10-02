@@ -359,9 +359,9 @@ async def cmd(c: str, empty=True, timeout=DEF_TIMEOUT_CMD_SECS):
     try:
         return await _cmd()
     except ExceptionNotConnected:
-        pm(f'error: not connected to send cmd {c}')
+        pm(f'error, not connected to send cmd {c}')
     except ExceptionCommand as ex:
-        pm(f'error: sending cmd {c} -> {ex}')
+        pm(f'error, sending cmd {c} -> {ex}')
 
 
 
@@ -1290,7 +1290,7 @@ async def main_ble_tdo():
     print(dev)
 
     if not dev:
-        pm(f'error: not found {mac} during scan')
+        pm(f'error, not found {mac} during scan')
         return
 
     rv = await connect(dev)
@@ -1339,7 +1339,7 @@ async def main_ble_ctd():
     print(dev)
 
     if not dev:
-        pm(f'error: not found {mac} during scan')
+        pm(f'error, not found {mac} during scan')
         return
 
     rv = await connect(dev)
