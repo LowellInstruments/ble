@@ -248,6 +248,7 @@ def _is_cmd_done():
         'FRM',
         'GAB',
         'GCC',
+        'GCI',
         'GCF',
         'GDO',
         'GDX',
@@ -303,6 +304,8 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     till = time.perf_counter() + cmd_timeout
     while is_connected() and time.perf_counter() < till:
         await asyncio.sleep(0.1)
+
+        # consider command finished
         if _is_cmd_done():
             _print_cmd_flow(f'-> {g_rx}')
             return g_rx
@@ -454,7 +457,7 @@ async def cmd_arf():
 
 
 
-# gets logger battery in mV
+# gets logger battery in mV, you will need to scale it later
 async def cmd_bat():
     rv = await cmd(f'{BAT_CMD} \r')
     ok = rv and len(rv) == 10 and rv.startswith(b'BAT')
@@ -972,6 +975,16 @@ async def cmd_mux():
 async def cmd_osc():
     rv = await cmd('OSC \r')
     ok = rv and rv.startswith(b'OSC')
+    if ok:
+        return 0, rv[6:].decode()
+    return 1, ''
+
+
+
+# get bluetooth connection interval
+async def cmd_gci():
+    rv = await cmd('GCI \r')
+    ok = rv and rv.startswith(b'GCI')
     if ok:
         return 0, rv[6:].decode()
     return 1, ''
