@@ -255,6 +255,7 @@ def _is_cmd_done():
         'GEC',
         'GFV',
         'GLT',
+        'GSA',
         'GSC',
         'GSP',
         'GST',
@@ -653,6 +654,8 @@ async def cmd_dwf(file_size) -> tuple:
     # r_set()
     last_n = 0
     el = time.perf_counter()
+    with open(DEV_SHM_DL_PROGRESS, 'w') as f:
+        f.write('0')
     pm(f'DWF: receiving file {file_size} bytes long')
     await g_cli.write_gatt_char(UUID_R, b'DWF \r')
 
@@ -668,6 +671,12 @@ async def cmd_dwf(file_size) -> tuple:
         n = len(g_rx)
         # pm('DWF progress', '{:5.2f} %'.format(100 * n / file_size))
         # r_set()
+
+        # share DL progress with other guys interested in it
+        with open(DEV_SHM_DL_PROGRESS, 'w') as f:
+            v = '{:5.2f}'.format(100 * len(g_rx) / file_size)
+            f.write(str(v))
+
         if n == last_n or n == file_size:
             break
         last_n = n
@@ -680,7 +689,7 @@ async def cmd_dwf(file_size) -> tuple:
     else:
         el = int(time.perf_counter()) - el
         pm(f'DWL speed {(file_size / el) / 1000} KB/s')
-    return rv, n
+    return rv, g_rx
 
 
 
@@ -724,8 +733,21 @@ async def cmd_frm():
 async def cmd_gab():
     c, _ = _build_cmd("GAB")
     rv = await cmd(c)
-    # rv: GAB C0XXYYZZXXYYZZ
+    # rv: GAB C0XXYYZZXXYYZZ...
     ok = rv and len(rv) == 198 and rv.startswith(b'GAB')
+    if not ok:
+        return 1, 0
+    return 0, rv[6:]
+
+
+
+
+# Get Sample Accelerometer
+async def cmd_gsa():
+    c, _ = _build_cmd("GSA")
+    rv = await cmd(c)
+    # rv: GAB 06XXYYZZ
+    ok = rv and len(rv) == 12 and rv.startswith(b'GSA')
     if not ok:
         return 1, 0
     return 0, rv[6:]
