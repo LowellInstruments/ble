@@ -846,7 +846,8 @@ async def cmd_glt():
 async def cmd_gsc():
     # rv: GSC 101234567890ABCDEF
     rv = await cmd('GSC \r')
-    ok = rv and len(rv) == 22 and rv.startswith(b'GSC')
+    print('gsc rv', rv)
+    ok = rv and (len(rv) == 22 or len(rv) == 14) and rv.startswith(b'GSC')
     if not ok:
         return 1, 0
     return 0, rv[6:]
@@ -1311,43 +1312,49 @@ async def cmd_xod():
 
 async def main_ble_tdo():
 
-    n = input('enter TDO board number you want to test -> ')
-    d = {
-        '0': "F0:5E:CD:25:92:F1",
-        '1': "F0:5E:CD:25:A1:16",
-        '3': "F0:5E:CD:25:92:95"
-    }
-    mac = d[n]
-    print(f'testing TDO #{n}, mac = {mac}')
+    # n = input('enter TDO board number you want to test -> ')
+    # d = {
+    #     '0': "F0:5E:CD:25:92:F1",
+    #     '1': "F0:5E:CD:25:A1:16",
+    #     '3': "F0:5E:CD:25:92:95"
+    # }
+    # mac = d[n]
+    # print(f'testing TDO #{n}, mac = {mac}')
 
 
-    dev = await scan_fast_one_mac(mac)
-    print(dev)
-
-    if not dev:
-        pm(f'error, not found {mac} during scan')
-        return
-
-    rv = await connect(dev)
-    if not rv:
-        return
-
-    g = ("-3.333333", "-4.444444", None, None)
-    # await cmd_sws(g)
-    # await cmd_dir()
-    # await cmd_dwg('2508701_LAB_20250919_165930.lid')
-    # bb = await cmd_dwl(28928)
-
-    # await cmd_gsp()
-    # await cmd_gst()
+    mac = "F0:5E:CD:25:92:9D"
+    print(f'searching mac {mac}')
 
 
-    await cmd_stm()
-    await cmd_frm()
-    time.sleep(1)
-    await cmd_rws(g)
+    # dev = await scan_fast_one_mac(mac)
+    # print(dev)
 
-    await disconnect()
+    dev = await ble_scan_slow('hci0', 100)
+
+    # if not dev:
+    #     pm(f'error, not found {mac} during scan')
+    #     return
+    #
+    # rv = await connect(dev)
+    # if not rv:
+    #     return
+    #
+    # g = ("-3.333333", "-4.444444", None, None)
+    # # await cmd_sws(g)
+    # # await cmd_dir()
+    # # await cmd_dwg('2508701_LAB_20250919_165930.lid')
+    # # bb = await cmd_dwl(28928)
+    #
+    # # await cmd_gsp()
+    # # await cmd_gst()
+    #
+    #
+    # await cmd_stm()
+    # await cmd_frm()
+    # time.sleep(1)
+    # await cmd_rws(g)
+    #
+    # await disconnect()
 
 
 
