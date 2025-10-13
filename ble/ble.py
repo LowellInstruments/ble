@@ -263,6 +263,7 @@ def _is_cmd_done():
         'GWC',
         'GWF',
         'HBW',
+        'INF',
         'LED',
         'LOG',
         'MAC',
@@ -726,6 +727,18 @@ async def cmd_frm():
     rv = await cmd('FRM \r')
     ok = rv == b'FRM 00'
     return 0 if ok else 1
+
+
+
+# get info bunch
+async def cmd_inf():
+    rv = await cmd('INF \r')
+    ok = rv.startswith(b'INF')
+    if not ok:
+        return 1, 0
+    print('INF all rv', rv)
+    return 0, rv[6:]
+
 
 
 
@@ -1322,23 +1335,27 @@ async def main_ble_tdo():
     # print(f'testing TDO #{n}, mac = {mac}')
 
 
-    mac = "F0:5E:CD:25:92:9D"
+    mac = "F0:5E:CD:25:97:02"
     print(f'searching mac {mac}')
 
 
-    # dev = await scan_fast_one_mac(mac)
-    # print(dev)
+    dev = await scan_fast_one_mac(mac)
+    print(dev)
 
-    dev = await ble_scan_slow('hci0', 100)
+    # dev = await ble_scan_slow('hci0', 10)
 
     # if not dev:
     #     pm(f'error, not found {mac} during scan')
     #     return
     #
-    # rv = await connect(dev)
-    # if not rv:
-    #     return
-    #
+    rv = await connect(dev)
+    if not rv:
+        return
+
+    rv = await cmd_inf()
+    print('INF', rv)
+
+
     # g = ("-3.333333", "-4.444444", None, None)
     # # await cmd_sws(g)
     # # await cmd_dir()
