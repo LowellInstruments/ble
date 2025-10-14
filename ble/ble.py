@@ -100,7 +100,7 @@ async def ble_scan_fast_any_mac_in_list(
     ls_macs_wanted = [i.upper() for i in ls_macs_wanted]
     for mtf in ls_macs_wanted:
         if ble_linux_is_mac_already_connected(mtf):
-            pm(f'error: scan_fast_any_mac_in_list a mac that is already connected')
+            pm(f'error, scan_fast_any_mac_in_list a mac that is already connected')
             return None
 
     bs = BleakScanner(adapter=adapter)
@@ -173,7 +173,7 @@ async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
         _gui_notification(f'connected to {dev.address}')
         return True
     except (Exception, ) as ex:
-        pm(f'error: connect {ex}')
+        pm(f'error, connect {ex}')
 
 
 
@@ -215,7 +215,7 @@ async def connect_by_mac(mac: str, conn_update=False) -> Optional[bool]:
         _gui_notification(f'connected to {mac}')
         return True
     except (Exception, ) as ex:
-        pm(f'error: connect {ex}')
+        pm(f'error, connect {ex}')
 
 
 
@@ -314,7 +314,7 @@ async def _wait_until_cmd_is_done(cmd_timeout):
 
 
     # debug command answer when errors
-    e = f'error: _wait_ans cmd {g_tag} timeout {cmd_timeout}'
+    e = f'error, _wait_ans cmd {g_tag} timeout {cmd_timeout}'
     pm("\033[91m {}\033[00m".format(e))
     pm("\t\033[91m g_rx: {}\033[00m".format(g_rx))
     if not g_rx:
@@ -325,7 +325,7 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     n = int(len(g_rx) / 2)
     if g_rx[:n] == g_rx[n:]:
         pm('-----------------------------------')
-        e = 'error: duplicate answer {} \n' \
+        e = 'error, duplicate answer {} \n' \
             'seems you used PWA recently \n' \
             'and Linux BLE stack got crazy, \n' \
             'just run $ systemctl restart bluetooth'
@@ -597,14 +597,17 @@ async def cmd_dwl(file_size) -> tuple:
     # loop through receiving 2048 bytes chunks
     for i in range(n):
         if not is_connected():
-            pm('error: DWL not connected')
+            pm('error, DWL not connected')
             return 1, g_rx
 
+        # -----------------
+        # send DWL command
+        # -----------------
         try:
             c = 'DWL {:02x}{}\r'.format(len(str(i)), i)
             await g_cli.write_gatt_char(UUID_R, c.encode())
         except (Exception,) as ex:
-            pm(f'error: DWL -> {ex}')
+            pm(f'error, DWL -> {ex}')
             return 1, g_rx
 
 
@@ -632,7 +635,7 @@ async def cmd_dwl(file_size) -> tuple:
                 break
 
         if not ok:
-            pm('error: DWL timeout')
+            pm('error, DWL timeout')
             break
 
     el = int(time.perf_counter() - el) or 1
@@ -657,14 +660,14 @@ async def cmd_dwf(file_size) -> tuple:
     el = time.perf_counter()
     with open(DEV_SHM_DL_PROGRESS, 'w') as f:
         f.write('0')
-    pm(f'DWF: receiving file {file_size} bytes long')
+    pm(f'DWF receiving file {file_size} bytes long')
     await g_cli.write_gatt_char(UUID_R, b'DWF \r')
 
 
     # receive whole file
     while 1:
         if not is_connected():
-            pm('error: DWF disconnected while receiving file')
+            pm('error, DWF disconnected while receiving file')
             return 1, bytes()
 
         # don't print progress too often or screws download timing
@@ -686,10 +689,10 @@ async def cmd_dwf(file_size) -> tuple:
     # report download result
     rv = 0 if n == file_size else 1
     if rv:
-        pm(f'error: DWF received {n} bytes vs file_size {file_size}')
+        pm(f'error, DWF received {n} bytes vs file_size {file_size}')
     else:
         el = int(time.perf_counter()) - el
-        pm(f'DWL speed {(file_size / el) / 1000} KB/s')
+        pm(f'DWF speed {(file_size / el) / 1000} KB/s')
     return rv, g_rx
 
 
@@ -776,9 +779,9 @@ async def cmd_gcc():
     if ok:
         return 0, rv.decode()
     if rv:
-        pm(f'error: bad GCC length {len(rv)} - 6 != {n} - 6')
+        pm(f'error, bad GCC length {len(rv)} - 6 != {n} - 6')
     else:
-        pm(f'error: bad GCC length = None')
+        pm(f'error, bad GCC length = None')
     return 1, ""
 
 

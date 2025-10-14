@@ -35,7 +35,7 @@ def ble_linux_detect_devices_left_connected_ll():
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
     if rv.returncode == 124:
-        print(f'error: ble_mat_detect_devices_left_connected_ll timeouted')
+        print(f'error, ble_mat_detect_devices_left_connected_ll timeout-ed')
 
     if rv.returncode == 1:
         # no devices found connected
@@ -161,5 +161,5 @@ def ble_linux_find_best_interface() -> int:
         if i != -1:
             pm(f'using internal interface hci{i}')
         else:
-            pm('error: cannot find using any bluetooth interface')
+            pm('error, cannot find using any bluetooth interface')
     return i
