@@ -263,7 +263,7 @@ def _is_cmd_done():
         'GWC',
         'GWF',
         'HBW',
-        'INF',
+        'GIN',
         'LED',
         'LOG',
         'MAC',
@@ -733,13 +733,13 @@ async def cmd_frm():
 
 
 
-# get info bunch
-async def cmd_inf():
-    rv = await cmd('INF \r')
-    ok = rv.startswith(b'INF')
+# get info
+async def cmd_gin():
+    rv = await cmd('GIN \r')
+    ok = rv.startswith(b'GIN')
     if not ok:
         return 1, 0
-    print('INF all rv', rv)
+    print('GIN all rv', rv)
     return 0, rv[6:]
 
 
@@ -1355,8 +1355,8 @@ async def main_ble_tdo():
     if not rv:
         return
 
-    rv = await cmd_inf()
-    print('INF', rv)
+    rv = await cmd_gin()
+    print('GIN', rv)
 
 
     # g = ("-3.333333", "-4.444444", None, None)
