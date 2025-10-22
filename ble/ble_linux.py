@@ -87,9 +87,9 @@ def ble_linux_disconnect_all():
 
 def _ble_linux_get_interface_type_by_index(i) -> str:
     # probe external ones first
-    cb = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
-    rvb = sp.run(cb, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-    if rvb == 0:
+    c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
+    if rv == 0:
         return 'external'
     return 'internal'
 
@@ -98,7 +98,10 @@ def _ble_linux_get_interface_type_by_index(i) -> str:
 def ble_linux_enumerate_all_interfaces() -> dict:
     d = {}
     for i in range(10):
-        d[i] = _ble_linux_get_interface_type_by_index(i)
+        c = f'hciconfig hci{i}'
+        rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
+        if rv == 0:
+            d[i] = _ble_linux_get_interface_type_by_index(i)
     return d
 
 
