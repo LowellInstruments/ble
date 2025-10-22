@@ -1,15 +1,9 @@
 import subprocess as sp
-
-
-
-BLE_SCAN_DURATION_S = 1
-d_d = {}
-p_mod = 'BLE'
-
+import time
 
 
 def pm(s):
-    print(f'{p_mod}: {s}')
+    print(f'BLE: {s}')
 
 
 
@@ -22,8 +16,8 @@ def ble_linux_get_bluez_version() -> str:
 
 
 
-def ble_linux_reset_antenna(h: int):
-    c = f"sudo hciconfig hci{h} reset"
+def ble_linux_reset_antenna_by_index(i: int):
+    c = f"sudo hciconfig hci{i} reset"
     sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
 
@@ -53,47 +47,19 @@ def ble_linux_detect_devices_left_connected_ll():
 
 
 
-def ble_linux_is_antenna_up_n_running(h_idx: int):
-    # for up to 10 seconds, read the BLE interfaces state
-    for i in range(10):
-        cr = f"hciconfig hci{h_idx} | grep 'UP RUNNING'"
+def ble_linux_is_antenna_up_n_running_by_index(i: int):
+    for _ in range(10):
+        cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
         rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
         if rv.returncode == 0:
             return 0
+        time.sleep(.1)
     return 1
 
 
 
-def ble_linux_some_devices_forgot_connected():
-
-    # TODO: AREMOVE THIS OR LEFT CONNECTED METHOD
-
-    # on bad bluetooth state, this takes long time
-    c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-
-    if rv.returncode == 124:
-        print(f'error, ble_linux_some_devices_forgot_connected timeouted')
-
-    if rv.returncode == 1:
-        # no devices found connected
-        return None
-
-    c = 'bluetoothctl info'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-
-    for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
-        b = f'\tName: {lg_type}'.encode()
-        if b in rv.stdout:
-            print('ble_linux_some_devices_forgot_connected: some connected')
-            return lg_type
-
-    return None
-
-
-
 def ble_linux_is_mac_already_connected(mac: str):
-    # check at bluez level
+    # we check at bluez level
     c = f'bluetoothctl info | grep {mac.upper()}'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     return rv == 0
@@ -101,7 +67,7 @@ def ble_linux_is_mac_already_connected(mac: str):
 
 
 def ble_linux_disconnect_by_mac(mac: str):
-    # disconnect at bluez level
+    # we disconnect at bluez level
     if not ble_linux_is_mac_already_connected(mac):
         return
     c = f'timeout 2 bluetoothctl disconnect {mac}'
@@ -119,7 +85,7 @@ def ble_linux_disconnect_all():
 
 
 
-def _ble_linux_get_type_of_interface_by_index(i) -> str:
+def _ble_linux_get_interface_type_by_index(i) -> str:
     # probe external ones first
     cb = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rvb = sp.run(cb, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
@@ -135,34 +101,56 @@ def _ble_linux_get_type_of_interface_by_index(i) -> str:
     return 'unknown'
 
 
-def _ble_linux_enumerate_interfaces() -> dict:
+
+def ble_linux_enumerate_all_interfaces() -> dict:
     d = {}
     for i in range(10):
-        t = _ble_linux_get_type_of_interface_by_index(i)
-        d[f'hci{i}'] = t
-    d = {k:v for k,v in d.items() if v !='unknown'}
-    return d
+        d[i] = _ble_linux_get_interface_type_by_index(i)
+    return {k:v for k,v in d.items() if v != 'unknown'}
 
 
 
-def ble_linux_find_index_of_type_of_interface(s) -> int:
-    assert s in ('internal', 'external')
-    d = _ble_linux_enumerate_interfaces()
-    for k, v in d.items():
-        if v == s:
-            return int(k.replace('hci', ''))
+
+def ble_linux_find_best_interface_index(app, single=False) -> int:
+    # we assume:
+    #   DDH will grab the lowest  number external interface or internal
+    #   BIX will grab the lowest  number external interface or internal
+    #   LAT will grab the highest number external interface
+
+    c = 'hciconfig -a | grep Primary | wc -l'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    if rv.returncode:
+        print(f'error, ble_linux_find_best_interface_index')
+        return -1
+
+    n = int(rv.stdout.decode())
+    if n == 1:
+        # we only have one interface
+        return 0
+
+    ls = list(range(n))
+    ls_i = [i for i in ls if _ble_linux_get_interface_type_by_index(i) == 'internal']
+    ls_e = [i for i in ls if _ble_linux_get_interface_type_by_index(i) == 'external']
+
+
+    if app == 'LAT':
+        if single:
+            # LAT is running without DDH
+            if ls_e:
+                return ls_e[-1]
+            print(f'error, ble_linux_find_best_interface_index for {app}, single, no external ')
+            return -1
+
+        # LAT not single, so we will need at least 2 external
+        if n < 3:
+            print(f'error, ble_linux_find_best_interface_index for {app}, not_single, few external')
+            return -1
+        return ls_e[-1]
+
+    # BIX and DDH get the immediately after 0
+    if ls_e:
+        return ls_e[0]
+    if ls_i:
+        return ls_i[0]
+    print(f'error, ble_linux_find_best_interface_index for {app}, single = {single}')
     return -1
-
-
-
-def ble_linux_find_best_interface() -> int:
-    i = ble_linux_find_index_of_type_of_interface('external')
-    if i != -1:
-        pm(f'using external interface hci{i}')
-    else:
-        i = ble_linux_find_index_of_type_of_interface('internal')
-        if i != -1:
-            pm(f'using internal interface hci{i}')
-        else:
-            pm('error, cannot find using any bluetooth interface')
-    return i
