@@ -91,14 +91,7 @@ def _ble_linux_get_interface_type_by_index(i) -> str:
     rvb = sp.run(cb, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     if rvb == 0:
         return 'external'
-
-    ci = f'hciconfig -a hci{i} | grep Manufacturer | grep Intel'
-    cc = f'hciconfig -a hci{i} | grep Manufacturer | grep Cypress'
-    rvi = sp.run(ci, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-    rvc = sp.run(cc, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-    if rvi == 0 or rvc == 0:
-        return 'internal'
-    return 'unknown'
+    return 'internal'
 
 
 
@@ -106,7 +99,7 @@ def ble_linux_enumerate_all_interfaces() -> dict:
     d = {}
     for i in range(10):
         d[i] = _ble_linux_get_interface_type_by_index(i)
-    return {k:v for k,v in d.items() if v != 'unknown'}
+    return d
 
 
 
