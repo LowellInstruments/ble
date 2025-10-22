@@ -21,6 +21,16 @@ def ble_linux_reset_antenna_by_index(i: int):
     sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
 
+def ble_linux_is_antenna_up_n_running_by_index(i: int):
+    for _ in range(10):
+        cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
+        rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+        if rv.returncode == 0:
+            return 0
+        time.sleep(.1)
+    return 1
+
+
 
 def ble_linux_detect_devices_left_connected_ll():
 
@@ -47,22 +57,11 @@ def ble_linux_detect_devices_left_connected_ll():
 
 
 
-def ble_linux_is_antenna_up_n_running_by_index(i: int):
-    for _ in range(10):
-        cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
-        rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-        if rv.returncode == 0:
-            return 0
-        time.sleep(.1)
-    return 1
-
-
-
 def ble_linux_is_mac_already_connected(mac: str):
     # we check at bluez level
     c = f'bluetoothctl info | grep {mac.upper()}'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-    return rv == 0
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    return rv.returncode == 0
 
 
 
@@ -70,10 +69,13 @@ def ble_linux_disconnect_by_mac(mac: str):
     # we disconnect at bluez level
     if not ble_linux_is_mac_already_connected(mac):
         return
-    c = f'timeout 2 bluetoothctl disconnect {mac}'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-    if rv == 0:
-        print('mac was already connected, disconnecting')
+
+    ls_macs_controllers = ble_linux_get_list_of_mac_of_local_controllers()
+    for mac_controller in ls_macs_controllers:
+        c = f'timeout 2 echo "select {mac_controller}\ndisconnect {mac}" | bluetoothctl'
+        rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+        if rv == 0:
+            print('mac was already connected, disconnecting')
 
 
 
@@ -85,7 +87,7 @@ def ble_linux_disconnect_all():
 
 
 
-def _ble_linux_get_interface_type_by_index(i) -> str:
+def _get_interface_type_by_index(i) -> str:
     # probe external ones first
     c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
@@ -101,7 +103,7 @@ def ble_linux_enumerate_all_interfaces() -> dict:
         c = f'hciconfig hci{i}'
         rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
         if rv == 0:
-            d[i] = _ble_linux_get_interface_type_by_index(i)
+            d[i] = _get_interface_type_by_index(i)
     return d
 
 
@@ -109,9 +111,9 @@ def ble_linux_enumerate_all_interfaces() -> dict:
 
 def ble_linux_find_best_interface_index(app, single=False) -> int:
     # we assume:
-    #   DDH will grab the lowest  number external interface or internal
-    #   BIX will grab the lowest  number external interface or internal
-    #   LAT will grab the highest number external interface
+    #   DDH = lowest  external interface or internal
+    #   BIX = lowest  external interface or internal
+    #   LAT = highest external interface
 
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -125,8 +127,8 @@ def ble_linux_find_best_interface_index(app, single=False) -> int:
         return 0
 
     ls = list(range(n))
-    ls_i = [i for i in ls if _ble_linux_get_interface_type_by_index(i) == 'internal']
-    ls_e = [i for i in ls if _ble_linux_get_interface_type_by_index(i) == 'external']
+    ls_i = [i for i in ls if _get_interface_type_by_index(i) == 'internal']
+    ls_e = [i for i in ls if _get_interface_type_by_index(i) == 'external']
 
 
     if app == 'LAT':
@@ -150,3 +152,20 @@ def ble_linux_find_best_interface_index(app, single=False) -> int:
         return ls_i[0]
     print(f'error, ble_linux_find_best_interface_index for {app}, single = {single}')
     return -1
+
+
+
+def ble_linux_get_list_of_mac_of_local_controllers() -> list:
+    c = 'bluetoothctl list | grep Controller'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    if rv.returncode:
+        print('error, ble_linux_get_list_of_mac_of_local_controllers')
+        return []
+    ls = rv.stdout.decode().split('\n')
+    ls_macs = [j.split(' ')[1] for i, j in enumerate(ls) if j]
+    return ls_macs
+
+
+
+if __name__ == '__main__':
+    ble_linux_get_list_of_mac_of_local_controllers()
