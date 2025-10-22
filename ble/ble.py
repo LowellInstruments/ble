@@ -36,7 +36,6 @@ UUID_R = 'f0001131-0451-4000-b000-000000000000'
 UUID_S = 'f0001130-0451-4000-b000-000000000000'
 SCAN_TIMEOUT_SECS = 10
 DEF_TIMEOUT_CMD_SECS = 10
-DEBUG = True
 g_rx = bytes()
 g_tag = ""
 g_cli: BleakClient
@@ -79,7 +78,7 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
+async def scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     bs = BleakScanner(adapter=adapter)
     await bs.start()
     await asyncio.sleep(timeout)
@@ -90,7 +89,7 @@ async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
 
 
 
-async def ble_scan_fast_any_mac_in_list(
+async def scan_fast_any_mac_in_list(
         ls_macs_wanted,
         adapter='hci0',
         timeout=SCAN_TIMEOUT_SECS
@@ -135,7 +134,7 @@ async def ble_scan_fast_any_mac_in_list(
 
 
 async def scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
-    return await ble_scan_fast_any_mac_in_list([mtf], adapter, timeout)
+    return await scan_fast_any_mac_in_list([mtf], adapter, timeout)
 
 
 
@@ -149,7 +148,11 @@ def is_connected():
 
 
 
-async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
+async def connect_by_dev(
+    dev: BLEDevice,
+    adapter='hci0',
+    conn_update=False
+) -> Optional[bool]:
 
     # dev might be None after a scan
     if not dev:
@@ -159,7 +162,10 @@ async def connect(dev: BLEDevice, conn_update=False) -> Optional[bool]:
     # retries embedded in bleak library
     try:
         global g_cli
-        g_cli = BleakClient(dev, timeout=20)
+        if platform.system() == 'Darwin':
+            g_cli = BleakClient(dev, timeout=20)
+        else:
+            g_cli = BleakClient(dev, adapter=adapter, timeout=20)
         el = time.perf_counter()
         await g_cli.connect()
 
@@ -189,13 +195,17 @@ async def disconnect():
 
 
 
-async def connect_by_mac(mac: str, conn_update=False) -> Optional[bool]:
+async def connect_by_mac(
+    mac: str,
+    adapter='hci0',
+    conn_update=False
+) -> Optional[bool]:
 
     # retries embedded in bleak library
     try:
         global g_cli
         if platform.system() != 'Darwin':
-            g_cli = BleakClient(mac, timeout=20)
+            g_cli = BleakClient(mac, adapter=adapter, timeout=20)
         else:
             dev = await BleakScanner.find_device_by_address(mac, cb={"use_bdaddr": True})
             if not dev:
@@ -1351,7 +1361,7 @@ async def main_ble_tdo():
     #     pm(f'error, not found {mac} during scan')
     #     return
     #
-    rv = await connect(dev)
+    rv = await connect_by_dev(dev)
     if not rv:
         return
 
@@ -1404,7 +1414,7 @@ async def main_ble_ctd():
         pm(f'error, not found {mac} during scan')
         return
 
-    rv = await connect(dev)
+    rv = await connect_by_dev(dev)
     if not rv:
         return
 
