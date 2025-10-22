@@ -66,6 +66,8 @@ def ble_linux_is_antenna_up_n_running(h_idx: int):
 
 def ble_linux_some_devices_forgot_connected():
 
+    # TODO: AREMOVE THIS OR LEFT CONNECTED METHOD
+
     # on bad bluetooth state, this takes long time
     c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -116,16 +118,8 @@ def ble_linux_disconnect_all():
 
 
 
-def _ble_linux_count_interfaces() -> int:
-    c0 = 'hciconfig hci0'
-    c1 = 'hciconfig hci1'
-    rv0 = sp.run(c0, shell=True, stdout=sp.DEVNULL, stderr=sp.DEVNULL).returncode
-    rv1 = sp.run(c1, shell=True, stdout=sp.DEVNULL, stderr=sp.DEVNULL).returncode
-    return [rv0, rv1].count(0)
 
-
-
-def ble_linux_get_type_of_interface(i) -> str:
+def _ble_linux_get_type_of_interface_by_index(i) -> str:
     # probe external ones first
     cb = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rvb = sp.run(cb, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
@@ -141,23 +135,32 @@ def ble_linux_get_type_of_interface(i) -> str:
     return 'unknown'
 
 
+def _ble_linux_enumerate_interfaces() -> dict:
+    d = {}
+    for i in range(10):
+        t = _ble_linux_get_type_of_interface_by_index(i)
+        d[f'hci{i}'] = t
+    d = {k:v for k,v in d.items() if v !='unknown'}
+    return d
 
-def ble_linux_find_this_type_of_interface(s) -> int:
+
+
+def ble_linux_find_index_of_type_of_interface(s) -> int:
     assert s in ('internal', 'external')
-    n = _ble_linux_count_interfaces()
-    for i in range(n):
-        if ble_linux_get_type_of_interface(i) == s:
-            return i
+    d = _ble_linux_enumerate_interfaces()
+    for k, v in d.items():
+        if v == s:
+            return int(k.replace('hci', ''))
     return -1
 
 
 
 def ble_linux_find_best_interface() -> int:
-    i = ble_linux_find_this_type_of_interface('external')
+    i = ble_linux_find_index_of_type_of_interface('external')
     if i != -1:
         pm(f'using external interface hci{i}')
     else:
-        i = ble_linux_find_this_type_of_interface('internal')
+        i = ble_linux_find_index_of_type_of_interface('internal')
         if i != -1:
             pm(f'using internal interface hci{i}')
         else:
