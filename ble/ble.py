@@ -152,11 +152,7 @@ def is_connected():
 
 
 
-async def ble_connect_by_dev(
-    dev: BLEDevice,
-    adapter='hci0',
-    conn_update=False
-) -> Optional[bool]:
+async def ble_connect_by_dev(dev: BLEDevice, adapter='hci0') -> Optional[bool]:
 
     # dev might be None after a scan
     if not dev:
@@ -174,7 +170,6 @@ async def ble_connect_by_dev(
         await g_cli.connect()
 
         # delay to negotiate connection parameters, if so
-        # if conn_update:
         await asyncio.sleep(.5)
 
         await g_cli.start_notify(UUID_T, _rx_cb)
@@ -187,11 +182,7 @@ async def ble_connect_by_dev(
 
 
 
-async def ble_connect_by_mac(
-    mac: str,
-    adapter='hci0',
-    conn_update=False
-) -> Optional[bool]:
+async def ble_connect_by_mac(mac: str, adapter='hci0') -> Optional[bool]:
 
     # retries embedded in bleak library
     try:
@@ -208,8 +199,7 @@ async def ble_connect_by_mac(
         await g_cli.connect()
 
         # delay to negotiate connection parameters, if so
-        if conn_update:
-            await asyncio.sleep(1)
+        await asyncio.sleep(.5)
 
         await g_cli.start_notify(UUID_T, _rx_cb)
         el = int(time.perf_counter() - el)
@@ -637,8 +627,8 @@ async def cmd_dwl(file_size) -> tuple:
 
         # download using DWL command (~7 KB/s when no connection update)
         ok = 0
-        for _ in range(20):
-            await asyncio.sleep(.1)
+        for _ in range(40):
+            await asyncio.sleep(.05)
             if len(g_rx) == (i + 1) * 2048:
                 # next chunk
                 ok = 1
