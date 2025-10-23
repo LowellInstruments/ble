@@ -88,7 +88,7 @@ def ble_linux_disconnect_all():
 
 
 
-def _get_interface_type_by_index(i) -> str:
+def ble_linux_get_adapter_type_by_index(i) -> str:
     # probe external ones first
     c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
@@ -104,7 +104,7 @@ def ble_linux_enumerate_all_adapters() -> dict:
         c = f'hciconfig hci{i}'
         rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
         if rv == 0:
-            d[i] = _get_interface_type_by_index(i)
+            d[i] = ble_linux_get_adapter_type_by_index(i)
     return d
 
 
@@ -128,8 +128,8 @@ def ble_linux_find_best_adapter_index(app, single=False) -> int:
         return 0
 
     ls = list(range(n))
-    ls_i = [i for i in ls if _get_interface_type_by_index(i) == 'internal']
-    ls_e = [i for i in ls if _get_interface_type_by_index(i) == 'external']
+    ls_i = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'internal']
+    ls_e = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'external']
 
 
     if app == 'LAT':

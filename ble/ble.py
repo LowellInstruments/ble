@@ -56,8 +56,12 @@ def set_print_cmd_flow(b: bool):
 
 
 
-def pm(s):
-    print(f'{p_mod}: {s}')
+def pm(s, color=''):
+    s = f'{p_mod}: {s}'
+    if not color:
+        print(s)
+    elif color == 'green':
+        print(f"\033[92m{s}\033[00m")
 
 
 
@@ -78,7 +82,7 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
+async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     bs = BleakScanner(adapter=adapter)
     await bs.start()
     await asyncio.sleep(timeout)
@@ -89,7 +93,7 @@ async def scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
 
 
 
-async def scan_fast_any_mac_in_list(
+async def ble_scan_fast_any_mac_in_list(
         ls_macs_wanted,
         adapter='hci0',
         timeout=SCAN_TIMEOUT_SECS
@@ -133,8 +137,8 @@ async def scan_fast_any_mac_in_list(
 
 
 
-async def scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
-    return await scan_fast_any_mac_in_list([mtf], adapter, timeout)
+async def ble_scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
+    return await ble_scan_fast_any_mac_in_list([mtf], adapter, timeout)
 
 
 
@@ -148,7 +152,7 @@ def is_connected():
 
 
 
-async def connect_by_dev(
+async def ble_connect_by_dev(
     dev: BLEDevice,
     adapter='hci0',
     conn_update=False
@@ -170,8 +174,8 @@ async def connect_by_dev(
         await g_cli.connect()
 
         # delay to negotiate connection parameters, if so
-        if conn_update:
-            await asyncio.sleep(1)
+        # if conn_update:
+        await asyncio.sleep(.5)
 
         await g_cli.start_notify(UUID_T, _rx_cb)
         el = int(time.perf_counter() - el)
@@ -183,19 +187,7 @@ async def connect_by_dev(
 
 
 
-async def disconnect():
-    # blueman-applet, blueman-tray may interfere
-    try:
-        global g_cli
-        await g_cli.disconnect()
-        pm('disconnected cleanly')
-    except (Exception, ):
-        # disconnection a bit and seem it failed
-        pm('disconnected')
-
-
-
-async def connect_by_mac(
+async def ble_connect_by_mac(
     mac: str,
     adapter='hci0',
     conn_update=False
@@ -226,6 +218,18 @@ async def connect_by_mac(
         return True
     except (Exception, ) as ex:
         pm(f'error, connect {ex}')
+
+
+
+async def ble_disconnect():
+    # blueman-applet, blueman-tray may interfere
+    try:
+        global g_cli
+        await g_cli.disconnect()
+        pm('disconnected cleanly')
+    except (Exception, ):
+        # disconnection a bit and seem it failed
+        pm('disconnected')
 
 
 
@@ -641,6 +645,7 @@ async def cmd_dwl(file_size) -> tuple:
                 break
             if len(g_rx) == file_size:
                 # all file done
+                pm('DWL download OK!', color='green')
                 ok = 1
                 break
 
@@ -702,6 +707,7 @@ async def cmd_dwf(file_size) -> tuple:
         pm(f'error, DWF received {n} bytes vs file_size {file_size}')
     else:
         el = int(time.perf_counter()) - el
+        pm('DWF download OK!', color='green')
         pm(f'DWF speed {(file_size / el) / 1000} KB/s')
     return rv, g_rx
 
@@ -1352,7 +1358,7 @@ async def main_ble_tdo():
     print(f'searching mac {mac}')
 
 
-    dev = await scan_fast_one_mac(mac)
+    dev = await ble_scan_fast_one_mac(mac)
     print(dev)
 
     # dev = await ble_scan_slow('hci0', 10)
@@ -1361,7 +1367,7 @@ async def main_ble_tdo():
     #     pm(f'error, not found {mac} during scan')
     #     return
     #
-    rv = await connect_by_dev(dev)
+    rv = await ble_connect_by_dev(dev)
     if not rv:
         return
 
@@ -1407,14 +1413,14 @@ async def main_ble_ctd():
     # ls_dev = await scan()
     # pm(ls_dev)
 
-    dev = await scan_fast_one_mac(mac)
+    dev = await ble_scan_fast_one_mac(mac)
     print(dev)
 
     if not dev:
         pm(f'error, not found {mac} during scan')
         return
 
-    rv = await connect_by_dev(dev)
+    rv = await ble_connect_by_dev(dev)
     if not rv:
         return
 
@@ -1434,6 +1440,6 @@ async def main_ble_ctd():
 
 
 
-    await disconnect()
+    await ble_disconnect()
 
 
