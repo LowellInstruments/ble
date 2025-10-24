@@ -1388,16 +1388,18 @@ async def main_ble_tdo():
 
 async def main_ble_ctd():
 
-    n = input('enter CTD board number you want to test -> ')
-    d = {
-        '1': "F0:5E:CD:25:92:EA",
-        '2': "F0:5E:CD:25:95:E0",
-        '3': "F0:5E:CD:25:95:D4",
-        '4': "F0:5E:CD:25:A4:21",
-        '5': "F0:5E:CD:25:A1:30"
-    }
-    mac = d[n]
-    print(f'testing CTD #{n}, mac = {mac}')
+    # n = input('enter CTD board number you want to test -> ')
+    # d = {
+    #     '1': "F0:5E:CD:25:92:EA",
+    #     '2': "F0:5E:CD:25:95:E0",
+    #     '3': "F0:5E:CD:25:95:D4",
+    #     '4': "F0:5E:CD:25:A4:21",
+    #     '5': "F0:5E:CD:25:A1:30"
+    # }
+    # mac = d[n]
+
+    mac = "F0:5E:CD:25:95:D4"    # CTD JOAQUIM
+    # print(f'testing CTD #{n}, mac = {mac}')
 
 
     # ls_dev = await scan()
