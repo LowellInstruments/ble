@@ -1345,7 +1345,7 @@ async def main_ble_tdo():
     # print(f'testing TDO #{n}, mac = {mac}')
 
 
-    mac = "F0:5E:CD:25:97:02"
+    mac = "F0:5E:CD:25:92:9D"
     print(f'searching mac {mac}')
 
 
