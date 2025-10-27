@@ -743,6 +743,7 @@ async def cmd_frm():
 async def cmd_gin():
     rv = await cmd('GIN \r')
     ok = rv.startswith(b'GIN')
+    print('rv_my_gin', rv)
     if not ok:
         return 1, 0
     print('GIN all rv', rv)
