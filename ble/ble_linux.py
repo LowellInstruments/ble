@@ -167,6 +167,18 @@ def ble_linux_get_list_of_macs_of_adapters() -> list:
     return ls_macs
 
 
+def ble_linux_find_internal_adapter_index() -> int:
+    c = 'hciconfig -a | grep Primary | wc -l'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    if rv.returncode:
+        _pm(f'error, ble_linux_find_internal_adapter_index')
+        return -1
+
+    n = int(rv.stdout.decode())
+    ls = list(range(n))
+    ls_i = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'internal']
+    return ls_i[0]
+
 
 if __name__ == '__main__':
     ble_linux_get_list_of_macs_of_adapters()

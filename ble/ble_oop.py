@@ -11,7 +11,7 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-from .ble_linux import ble_linux_is_mac_already_connected
+from .ble_linux import ble_linux_is_mac_already_connected, ble_linux_find_internal_adapter_index
 from .li_cmds import *
 
 
@@ -130,7 +130,6 @@ async def ble_scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     return await ble_scan_fast_any_mac_in_list([mtf], adapter, timeout)
 
 
-
 def _cmd_dir_ans_to_dict(ls, ext, match=True):
     if ls is None:
         return {}
@@ -197,6 +196,7 @@ class LoggerBle:
         self.rx = bytes()
         self.tag = ''
         self.cli = None
+        self.ad = ble_linux_find_internal_adapter_index()
 
 
     def _rx_cb(self, _: BleakGATTCharacteristic, bb: bytearray):
@@ -217,7 +217,7 @@ class LoggerBle:
             return False
 
 
-    async def ble_connect_by_dev(self, dev: BLEDevice, adapter='hci0') -> Optional[bool]:
+    async def ble_connect_by_dev(self, dev: BLEDevice) -> Optional[bool]:
     
         # dev might be None after a scan
         if not dev:
@@ -229,7 +229,7 @@ class LoggerBle:
             if platform.system() == 'Darwin':
                 self.cli = BleakClient(dev, timeout=20)
             else:
-                self.cli = BleakClient(dev, adapter=adapter, timeout=20)
+                self.cli = BleakClient(dev, adapter=self.ad, timeout=20)
             el = time.perf_counter()
             await self.cli.connect()
     
@@ -246,12 +246,12 @@ class LoggerBle:
 
 
 
-    async def ble_connect_by_mac(self, mac: str, adapter='hci0') -> Optional[bool]:
+    async def ble_connect_by_mac(self, mac: str) -> Optional[bool]:
 
         # retries embedded in bleak library
         try:
             if platform.system() != 'Darwin':
-                self.cli = BleakClient(mac, adapter=adapter, timeout=20)
+                self.cli = BleakClient(mac, adapter=self.ad, timeout=20)
             else:
                 dev = await BleakScanner.find_device_by_address(mac, cb={"use_bdaddr": True})
                 if not dev:
@@ -402,8 +402,9 @@ class LoggerBle:
 
     async def cmd(self, c: str, empty=True, timeout=DEF_TIMEOUT_CMD_SECS):
 
-        # send a command via BLE and wait for it to be considered finish
+        # closure
         async def _cmd():
+
             if not self.is_connected():
                 raise ExceptionNotConnected
 
@@ -424,8 +425,10 @@ class LoggerBle:
         # return command answer or None on command exceptions
         try:
             return await _cmd()
+
         except ExceptionNotConnected:
             pm(f'error, not connected to send cmd {c}')
+
         except ExceptionCommand as ex:
             pm(f'error, sending cmd {c} -> {ex}')
 
@@ -436,9 +439,6 @@ class LoggerBle:
     # =========================================
     # commands for lowell instruments loggers
     # =========================================
-
-
-
 
 
     # for development, adjust rate advertisement logger
