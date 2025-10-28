@@ -237,9 +237,10 @@ class LoggerBle:
             await asyncio.sleep(.5)
     
             await self.cli.start_notify(UUID_T, self._rx_cb)
+            mac = dev.address
             el = int(time.perf_counter() - el)
-            pm(f"connected in {el} seconds")
-            _gui_notification(f'connected to {dev.address}')
+            pm(f"connected to {mac} in {el} seconds")
+            _gui_notification(f'connected to {mac} in {el} seconds')
             return True
         except (Exception, ) as ex:
             pm(f'error, connect {ex}')
@@ -266,8 +267,8 @@ class LoggerBle:
 
             await self.cli.start_notify(UUID_T, self._rx_cb)
             el = int(time.perf_counter() - el)
-            pm(f"connected in {el} seconds")
-            _gui_notification(f'connected to {mac}')
+            pm(f"connected to {mac} in {el} seconds")
+            _gui_notification(f'connected to {mac} in {el} seconds')
             return True
         except (Exception, ) as ex:
             pm(f'error, connect {ex}')
