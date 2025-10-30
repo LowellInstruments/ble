@@ -82,13 +82,19 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
+async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS, only_li=False):
     bs = BleakScanner(adapter=adapter)
+    if only_li:
+        # todo: test this, does not seem to work
+        print('scanning only for LI devices')
+        bs = BleakScanner(adapter=adapter,
+                          filters={"UUIDs":[UUID_S]})
+
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
-    # pm(bs.discovered_devices)
-    # [BLEDevice(71:C5:75:B7:CB:7A, 71-C5-75-B7-CB-7A), BLEDev...
+    # bs: [BLEDevice(71:C5:75:B7:CB:7A, TDO), BLEDev...
+    # print('discovered devices:', bs.discovered_devices)
     return bs.discovered_devices
 
 
@@ -175,7 +181,8 @@ async def ble_connect_by_dev(dev: BLEDevice, adapter='hci0') -> Optional[bool]:
         await g_cli.start_notify(UUID_T, _rx_cb)
         el = int(time.perf_counter() - el)
         pm(f"connected in {el} seconds")
-        _gui_notification(f'connected to {dev.address}')
+        if platform.system() == 'Linux':
+            _gui_notification(f'connected to {dev.address}')
         return True
     except (Exception, ) as ex:
         pm(f'error, connect {ex}')
