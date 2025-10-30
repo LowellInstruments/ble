@@ -82,7 +82,7 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS, only_li=False):
+async def ble_scan_slow(adapter='', timeout=SCAN_TIMEOUT_SECS, only_li=False):
     bs = BleakScanner(adapter=adapter)
     if only_li:
         # todo: test this, does not seem to work
@@ -101,7 +101,7 @@ async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS, only_li=False
 
 async def ble_scan_fast_any_mac_in_list(
         ls_macs_wanted,
-        adapter='hci0',
+        adapter='',
         timeout=SCAN_TIMEOUT_SECS
 ):
 
@@ -143,7 +143,7 @@ async def ble_scan_fast_any_mac_in_list(
 
 
 
-async def ble_scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
+async def ble_scan_fast_one_mac(mtf, adapter='', timeout=SCAN_TIMEOUT_SECS):
     return await ble_scan_fast_any_mac_in_list([mtf], adapter, timeout)
 
 
@@ -158,7 +158,7 @@ def is_connected():
 
 
 
-async def ble_connect_by_dev(dev: BLEDevice, adapter='hci0') -> Optional[bool]:
+async def ble_connect_by_dev(dev: BLEDevice, adapter='') -> Optional[bool]:
 
     # dev might be None after a scan
     if not dev:
@@ -189,7 +189,7 @@ async def ble_connect_by_dev(dev: BLEDevice, adapter='hci0') -> Optional[bool]:
 
 
 
-async def ble_connect_by_mac(mac: str, adapter='hci0') -> Optional[bool]:
+async def ble_connect_by_mac(mac: str, adapter='') -> Optional[bool]:
 
     # retries embedded in bleak library
     try:

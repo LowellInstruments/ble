@@ -22,6 +22,7 @@ def ble_linux_reset_adapter_by_index(i: int):
     sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
 
+
 def ble_linux_is_adapter_up_by_index(i: int):
     for _ in range(10):
         cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
@@ -167,6 +168,7 @@ def ble_linux_get_list_of_macs_of_adapters() -> list:
     return ls_macs
 
 
+
 def ble_linux_find_internal_adapter_index() -> int:
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -178,6 +180,7 @@ def ble_linux_find_internal_adapter_index() -> int:
     ls = list(range(n))
     ls_i = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'internal']
     return ls_i[0]
+
 
 
 if __name__ == '__main__':
