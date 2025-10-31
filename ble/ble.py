@@ -11,7 +11,7 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-from .ble_linux import ble_linux_is_mac_already_connected
+from .ble_linux import ble_linux_logger_is_this_mac_connected
 from .li_cmds import *
 
 
@@ -102,7 +102,7 @@ async def ble_scan_fast_any_mac_in_list(
     # just tell, do not act here
     ls_macs_wanted = [i.upper() for i in ls_macs_wanted]
     for mtf in ls_macs_wanted:
-        if ble_linux_is_mac_already_connected(mtf):
+        if ble_linux_logger_is_this_mac_connected(mtf):
             pm(f'error, scan_fast_any_mac_in_list a mac that is already connected')
             return None
 

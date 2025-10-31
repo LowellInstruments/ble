@@ -17,13 +17,13 @@ def ble_linux_get_bluez_version() -> str:
 
 
 
-def ble_linux_reset_adapter_by_index(i: int):
+def ble_linux_adapter_reset_by_index(i: int):
     c = f"sudo hciconfig hci{i} reset"
     sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
 
 
-def ble_linux_is_adapter_up_by_index(i: int):
+def ble_linux_adapter_is_it_up_by_index(i: int):
     for _ in range(10):
         cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
         rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -34,62 +34,7 @@ def ble_linux_is_adapter_up_by_index(i: int):
 
 
 
-def ble_linux_is_there_any_mac_left_connected():
-
-    # on bad bluetooth state, this takes a long time
-    c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-
-    if rv.returncode == 124:
-        _pm(f'error, ble_mat_detect_devices_left_connected_ll timeout-ed')
-
-    if rv.returncode == 1:
-        # no devices found connected
-        return 0
-
-    c = 'bluetoothctl info'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-
-    for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
-        b = '\tName: {}'.format(lg_type).encode()
-        if b in rv.stdout:
-            return 1
-
-    return 0
-
-
-
-def ble_linux_is_mac_already_connected(mac: str):
-    # we check at bluez level
-    c = f'bluetoothctl info | grep {mac.upper()}'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-    return rv.returncode == 0
-
-
-
-def ble_linux_disconnect_by_mac(mac: str):
-    # we disconnect at bluez level
-    if not ble_linux_is_mac_already_connected(mac):
-        return
-
-    ls_macs_controllers = ble_linux_get_list_of_macs_of_adapters()
-    for mac_controller in ls_macs_controllers:
-        c = f'timeout 2 echo "select {mac_controller}\ndisconnect {mac}" | bluetoothctl'
-        rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-        if rv == 0:
-            _pm('mac was already connected, disconnecting')
-
-
-
-def ble_linux_disconnect_all():
-    # disconnect at bluez level
-    c = f'timeout 5 bluetoothctl disconnect'
-    return sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-
-
-
-
-def ble_linux_get_adapter_type_by_index(i) -> str:
+def ble_linux_adapter_get_type_by_index(i) -> str:
     # probe external ones first
     c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
@@ -99,19 +44,18 @@ def ble_linux_get_adapter_type_by_index(i) -> str:
 
 
 
-def ble_linux_enumerate_all_adapters() -> dict:
+def ble_linux_adapter_enumerate_all_of_them() -> dict:
     d = {}
     for i in range(10):
         c = f'hciconfig hci{i}'
         rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
         if rv == 0:
-            d[i] = ble_linux_get_adapter_type_by_index(i)
+            d[i] = ble_linux_adapter_get_type_by_index(i)
     return d
 
 
 
-
-def ble_linux_find_best_adapter_index(app, single=False) -> int:
+def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
     # we assume:
     #   DDH = lowest  external interface or internal
     #   BIX = lowest  external interface or internal
@@ -129,8 +73,8 @@ def ble_linux_find_best_adapter_index(app, single=False) -> int:
         return 0
 
     ls = list(range(n))
-    ls_i = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'internal']
-    ls_e = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'external']
+    ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'internal']
+    ls_e = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'external']
 
 
     if app == 'LAT':
@@ -157,19 +101,8 @@ def ble_linux_find_best_adapter_index(app, single=False) -> int:
 
 
 
-def ble_linux_get_list_of_macs_of_adapters() -> list:
-    c = 'bluetoothctl list | grep Controller'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-    if rv.returncode:
-        _pm('error, ble_linux_get_list_of_mac_of_local_controllers')
-        return []
-    ls = rv.stdout.decode().split('\n')
-    ls_macs = [j.split(' ')[1] for i, j in enumerate(ls) if j]
-    return ls_macs
 
-
-
-def ble_linux_find_internal_adapter_index() -> int:
+def ble_linux_adapter_find_internal_index() -> int:
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
     if rv.returncode:
@@ -178,10 +111,74 @@ def ble_linux_find_internal_adapter_index() -> int:
 
     n = int(rv.stdout.decode())
     ls = list(range(n))
-    ls_i = [i for i in ls if ble_linux_get_adapter_type_by_index(i) == 'internal']
+    ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'internal']
     return ls_i[0]
 
 
 
-if __name__ == '__main__':
-    ble_linux_get_list_of_macs_of_adapters()
+
+def ble_linux_logger_any_left_connected():
+
+    # on bad bluetooth state, this takes a long time
+    c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    if rv.returncode == 124:
+        _pm(f'error, ble_mat_detect_devices_left_connected_ll timeout-ed')
+
+    if rv.returncode == 1:
+        # no devices found connected
+        return 0
+
+    c = 'bluetoothctl info'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
+        b = '\tName: {}'.format(lg_type).encode()
+        if b in rv.stdout:
+            return 1
+    return 0
+
+
+
+def ble_linux_logger_is_this_mac_connected(mac: str):
+    # we check at bluez level
+    c = f'bluetoothctl info | grep {mac.upper()}'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    return rv.returncode == 0
+
+
+
+def ble_linux_logger_disconnect_by_mac(mac: str):
+
+    # we disconnect at bluez level
+    if not ble_linux_logger_is_this_mac_connected(mac):
+        return
+
+
+    # first build a list of all controller interfaces
+    c = 'bluetoothctl list | grep Controller'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    if rv.returncode:
+        _pm('error, ble_linux_get_list_of_mac_of_local_controllers')
+        return
+    ls = rv.stdout.decode().split('\n')
+    ls_macs_controllers = [j.split(' ')[1] for i, j in enumerate(ls) if j]
+
+
+    for mc in ls_macs_controllers:
+        c = f'timeout 2 echo "select {mc}\ndisconnect {mac}" | bluetoothctl'
+        rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+        if rv == 0:
+            _pm('mac was already connected, disconnecting')
+
+
+
+def ble_linux_logger_disconnect_all():
+    for i in range(10):
+        if not ble_linux_logger_any_left_connected():
+            break
+        print('BLE: linux, disconnecting logger {i+1} left connected')
+        c = f'timeout 5 bluetoothctl disconnect'
+        sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
