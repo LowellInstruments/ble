@@ -740,10 +740,10 @@ class LoggerBle:
     async def cmd_gin(self):
         rv = await self.cmd('GIN \r')
         ok = rv.startswith(b'GIN')
-        print('rv_my_gin', rv)
         if not ok:
             return 1, 0
-        print('GIN all rv', rv)
+        # rv: b'GIN 64TDO,F0:5E:CD:25:92:9D,2508702,4.3.02,stopped,
+        #       2025/10/31 00:31:21,431402,1602,2025/10/31 00:16:21,0,0'
         return 0, rv[6:]
 
 

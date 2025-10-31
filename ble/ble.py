@@ -82,14 +82,8 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS, only_li=False):
+async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     bs = BleakScanner(adapter=adapter)
-    if only_li:
-        # todo: test this, does not seem to work
-        print('scanning only for LI devices')
-        bs = BleakScanner(adapter=adapter,
-                          filters={"UUIDs":[UUID_S]})
-
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
