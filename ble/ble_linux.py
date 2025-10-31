@@ -56,6 +56,7 @@ def ble_linux_adapter_enumerate_all_of_them() -> dict:
 
 
 def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
+
     # we assume:
     #   DDH = lowest  external interface or internal
     #   BIX = lowest  external interface or internal
@@ -94,6 +95,7 @@ def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
     # BIX and DDH get the immediately after 0
     if ls_e:
         return ls_e[0]
+
     if ls_i:
         return ls_i[0]
     _pm(f'error, ble_linux_find_best_interface_index for {app}, single = {single}')
@@ -109,6 +111,7 @@ def ble_linux_adapter_find_internal_index() -> int:
         _pm(f'error, ble_linux_find_internal_adapter_index')
         return -1
 
+    # n: how many adapters this linux machine has
     n = int(rv.stdout.decode())
     ls = list(range(n))
     ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'internal']
@@ -117,7 +120,7 @@ def ble_linux_adapter_find_internal_index() -> int:
 
 
 
-def ble_linux_logger_any_left_connected():
+def ble_linux_logger_was_any_left_connected():
 
     # on bad bluetooth state, this takes a long time
     c = 'timeout 2 bluetoothctl info | grep "Connected: yes"'
@@ -130,9 +133,9 @@ def ble_linux_logger_any_left_connected():
         # no devices found connected
         return 0
 
+    # see left connected stuff
     c = 'bluetoothctl info'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-
     for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
         b = '\tName: {}'.format(lg_type).encode()
         if b in rv.stdout:
@@ -155,7 +158,6 @@ def ble_linux_logger_disconnect_by_mac(mac: str):
     if not ble_linux_logger_is_this_mac_connected(mac):
         return
 
-
     # first build a list of all controller interfaces
     c = 'bluetoothctl list | grep Controller'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -165,7 +167,7 @@ def ble_linux_logger_disconnect_by_mac(mac: str):
     ls = rv.stdout.decode().split('\n')
     ls_macs_controllers = [j.split(' ')[1] for i, j in enumerate(ls) if j]
 
-
+    # for each interface see if this logger mac is connected
     for mc in ls_macs_controllers:
         c = f'timeout 2 echo "select {mc}\ndisconnect {mac}" | bluetoothctl'
         rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -176,9 +178,9 @@ def ble_linux_logger_disconnect_by_mac(mac: str):
 
 def ble_linux_logger_disconnect_all():
     for i in range(10):
-        if not ble_linux_logger_any_left_connected():
+        if not ble_linux_logger_was_any_left_connected():
             break
         print('BLE: linux, disconnecting logger {i+1} left connected')
-        c = f'timeout 5 bluetoothctl disconnect'
+        c = f'timeout 2 bluetoothctl disconnect'
         sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 
