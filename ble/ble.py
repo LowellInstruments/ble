@@ -83,13 +83,24 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 async def ble_scan_slow(adapter='', timeout=SCAN_TIMEOUT_SECS):
-    bs = BleakScanner(adapter=adapter)
+    bs = BleakScanner(adapter=adapter, return_adv=False)
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
     # bs: [BLEDevice(71:C5:75:B7:CB:7A, TDO), BLEDev...
     # print('discovered devices:', bs.discovered_devices)
     return bs.discovered_devices
+
+
+
+async def ble_scan_slow_with_adv_data(adapter='', timeout=SCAN_TIMEOUT_SECS):
+    bs = BleakScanner(adapter=adapter, return_adv=True)
+    await bs.start()
+    await asyncio.sleep(timeout)
+    await bs.stop()
+    # '<mac>': (BLEDevice(<mac>, TDO), AdvertisementData(local_name='TDO', rssi=-89)),
+    return bs.discovered_devices_and_advertisement_data
+
 
 
 
