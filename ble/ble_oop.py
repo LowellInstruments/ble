@@ -62,7 +62,9 @@ def pm(s, color=''):
 
 
 
-def _gui_notification(s):
+def _gui_notification(s, force=False):
+    if not force:
+        return
     try:
         # pop-up at upper right
         c = f'notify-send "Bluetooth" "{s}" -t 3000'

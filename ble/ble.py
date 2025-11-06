@@ -65,7 +65,9 @@ def pm(s, color=''):
 
 
 
-def _gui_notification(s):
+def _gui_notification(s, force=False):
+    if not force:
+        return
     try:
         # pop-up at upper right
         c = f'notify-send "Bluetooth" "{s}" -t 3000'
@@ -323,7 +325,9 @@ async def _wait_until_cmd_is_done(cmd_timeout):
     while is_connected() and time.perf_counter() < till:
         await asyncio.sleep(0.1)
 
-        # consider command finished
+        # ---------------------------------------------
+        # consider command finished, return its answer
+        # ---------------------------------------------
         if _is_cmd_done():
             _print_cmd_flow(f'-> {g_rx}')
             return g_rx
@@ -754,7 +758,7 @@ async def cmd_frm():
 # get info
 async def cmd_gin():
     rv = await cmd('GIN \r')
-    ok = rv.startswith(b'GIN')
+    ok = rv and rv.startswith(b'GIN')
     print('rv_my_gin', rv)
     if not ok:
         return 1, 0
@@ -1186,6 +1190,8 @@ async def cmd_ssp(v):
 # set logger time in UTC
 async def cmd_stm():
     # time() gives seconds since epoch, in UTC
+    rv = await cmd('GTM \r', timeout=5)
+    print(f'GTM before STM = {rv}')
     dt = datetime.datetime.fromtimestamp(time.time(), tz=timezone.utc)
     c, _ = _build_cmd(SET_TIME_CMD, dt.strftime('%Y/%m/%d %H:%M:%S'))
     rv = await cmd(c)
