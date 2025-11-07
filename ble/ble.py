@@ -294,6 +294,7 @@ def _is_cmd_done():
         RWS_CMD,
         'SCC',
         'SCF',
+        'SLA',
         'SPN',
         'SSP',
         'STM',
@@ -513,6 +514,18 @@ async def cmd_beh(tag, v):
     if rv and rv.startswith(b'BEH'):
         return 0
     return 1
+
+
+
+# set logger alias
+async def cmd_sla(s):
+    assert len(s) <= 7
+    c, _ = _build_cmd("SLA", s)
+    rv = await cmd(c, timeout=5)
+    if rv and rv.startswith(b'SLA'):
+        return 0
+    return 1
+
 
 
 

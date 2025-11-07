@@ -17,8 +17,8 @@ from .li_cmds import *
 
 
 # =========================================
-# new bleak-v1.0-compliant Lowell library
-# this also works with old v0.2
+# this was made to be able to work with TC4
+# with 3 connections at the same time
 # =========================================
 
 
