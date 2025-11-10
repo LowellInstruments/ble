@@ -62,10 +62,11 @@ def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
     #   BIX = lowest  external interface or internal
     #   LAT = highest external interface
 
+    app = app.upper()
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
     if rv.returncode:
-        _pm(f'error, ble_linux_find_best_interface_index')
+        _pm(f'error, ble_linux_adapter_find_best_index_by_app {app}')
         return -1
 
     n = int(rv.stdout.decode())
