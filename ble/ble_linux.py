@@ -180,7 +180,7 @@ def ble_linux_logger_disconnect_all():
     for i in range(10):
         if not ble_linux_logger_was_any_left_connected():
             break
-        print('BLE: linux, disconnecting logger {i+1} left connected')
+        print(f'BLE: linux, disconnecting logger {i+1} left connected')
         c = f'timeout 2 bluetoothctl disconnect'
         sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
 

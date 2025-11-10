@@ -65,6 +65,8 @@ def pm(s, color=''):
 def _gui_notification(s, force=False):
     if not force:
         return
+    if platform.system() != 'Linux':
+        return
     try:
         # pop-up at upper right
         c = f'notify-send "Bluetooth" "{s}" -t 3000'
@@ -73,14 +75,25 @@ def _gui_notification(s, force=False):
         pass
 
 
+
 async def ble_scan_slow(adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
-    bs = BleakScanner(adapter=adapter)
+    bs = BleakScanner(adapter=adapter, return_adv=False)
     await bs.start()
     await asyncio.sleep(timeout)
     await bs.stop()
     # pm(bs.discovered_devices)
     # [BLEDevice(71:C5:75:B7:CB:7A, 71-C5-75-B7-CB-7A), BLEDev...
     return bs.discovered_devices
+
+
+
+async def ble_scan_slow_with_adv_data(adapter='', timeout=SCAN_TIMEOUT_SECS):
+    bs = BleakScanner(adapter=adapter, return_adv=True)
+    await bs.start()
+    await asyncio.sleep(timeout)
+    await bs.stop()
+    # '<mac>': (BLEDevice(<mac>, TDO), AdvertisementData(local_name='TDO', rssi=-89)),
+    return bs.discovered_devices_and_advertisement_data
 
 
 
@@ -130,6 +143,7 @@ async def ble_scan_fast_any_mac_in_list(
 
 async def ble_scan_fast_one_mac(mtf, adapter='hci0', timeout=SCAN_TIMEOUT_SECS):
     return await ble_scan_fast_any_mac_in_list([mtf], adapter, timeout)
+
 
 
 def _cmd_dir_ans_to_dict(ls, ext, match=True):
@@ -500,6 +514,17 @@ class LoggerBle:
         c, _ = _build_cmd("BEH", s)
         rv = await self.cmd(c, timeout=5)
         if rv and rv.startswith(b'BEH'):
+            return 0
+        return 1
+
+
+
+    # set logger alias
+    async def cmd_sla(self, s):
+        assert len(s) <= 7
+        c, _ = _build_cmd("SLA", s)
+        rv = await self.cmd(c, timeout=5)
+        if rv and rv.startswith(b'SLA'):
             return 0
         return 1
 
