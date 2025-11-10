@@ -1,5 +1,5 @@
 import asyncio
-from ble.ble import main_ble_tdo, main_ble_ctd
+from ble.ble_oop import main_ble_tdo, main_ble_ctd
 
 
 
