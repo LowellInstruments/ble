@@ -212,7 +212,9 @@ class LoggerBle:
         self.rx = bytes()
         self.tag = ''
         self.cli = None
-        self.ad = ble_linux_adapter_find_internal_index()
+        self.ad = None
+        if platform.system() == 'Linux':
+            self.ad = ble_linux_adapter_find_internal_index()
 
 
     def _rx_cb(self, _: BleakGATTCharacteristic, bb: bytearray):
