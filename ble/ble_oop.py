@@ -330,6 +330,7 @@ class LoggerBle:
             'FRM',
             'GAB',
             'GCC',
+            'GCQ',
             'GCI',
             'GCF',
             'GDO',
@@ -359,6 +360,7 @@ class LoggerBle:
             RUN_CMD,
             RWS_CMD,
             'SCC',
+            'SCQ',
             'SCF',
             'SPN',
             'SSP',
@@ -819,6 +821,21 @@ class LoggerBle:
 
 
 
+    # Get Constants for Qonductivity
+    async def cmd_gcq(self):
+        rv = await self.cmd('GCQ \r')
+        n = 4
+        ok = rv and len(rv) == ((n * 5) + 6) and rv.startswith(b'GCQ')
+        if ok:
+            return 0, rv.decode()
+        if rv:
+            pm(f'error, bad GCQ length {len(rv)} - 6 != {n} - 6')
+        else:
+            pm(f'error, bad GCQ length = None')
+        return 1, ""
+
+
+
 
     # Get constants proFiling
     async def cmd_gcf(self):
@@ -1174,6 +1191,16 @@ class LoggerBle:
         c, _ = _build_cmd('SCC', f'{tag}{v}')
         rv = await self.cmd(c, timeout=30)
         return 0 if rv == b'SCC 00' else 1
+
+
+
+    # Set Calibration Qonductivity
+    async def cmd_scq(self, tag, v):
+        assert len(tag) == 3
+        assert len(v) == 5
+        c, _ = _build_cmd('SCQ', f'{tag}{v}')
+        rv = await self.cmd(c, timeout=30)
+        return 0 if rv == b'SCQ 00' else 1
 
 
 
