@@ -362,6 +362,7 @@ class LoggerBle:
             'SCC',
             'SCQ',
             'SCF',
+            'SLA',
             'SPN',
             'SSP',
             'STM',
