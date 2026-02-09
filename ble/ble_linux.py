@@ -105,18 +105,30 @@ def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
 
 
 
-def ble_linux_adapter_find_internal_index() -> int:
+def ble_linux_adapter_find_index_by_type(ad_type: str) -> int:
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
     if rv.returncode:
-        _pm(f'error, ble_linux_find_internal_adapter_index')
+        _pm(f'error, ble_linux_adapter_find_index_by_type')
         return -1
 
     # n: how many adapters this linux machine has
     n = int(rv.stdout.decode())
     ls = list(range(n))
-    ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'internal']
-    return ls_i[0]
+    ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == ad_type]
+    if ls_i:
+        return ls_i[0]
+    return -1
+
+
+
+def ble_linux_adapter_find_internal_index() -> int:
+    return ble_linux_adapter_find_index_by_type('internal')
+
+
+
+def ble_linux_adapter_find_external_index() -> int:
+    return ble_linux_adapter_find_index_by_type('external')
 
 
 

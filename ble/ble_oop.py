@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import json
 import math
+import sys
 import time
 from datetime import timezone
 from typing import Optional
@@ -11,7 +12,8 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-from .ble_linux import ble_linux_logger_is_this_mac_connected, ble_linux_adapter_find_internal_index
+from .ble_linux import ble_linux_logger_is_this_mac_connected, ble_linux_adapter_find_internal_index, \
+    ble_linux_adapter_find_index_by_type
 from .li_cmds import *
 
 
@@ -208,13 +210,22 @@ def _build_cmd(*args):
 
 
 class LoggerBle:
-    def __init__(self):
+    def __init__(self, ad_type='internal'):
+        assert(ad_type in ['internal', 'external'])
         self.rx = bytes()
         self.tag = ''
         self.cli = None
         self.ad = None
         if platform.system() == 'Linux':
-            self.ad = ble_linux_adapter_find_internal_index()
+            self.ad = ble_linux_adapter_find_index_by_type(ad_type=ad_type)
+            if  self.ad == -1:
+                print(f'error, cannot find {ad_type} BLE adapter')
+                inv = 'external' if ad_type == 'internal' else 'external'
+                self.ad = ble_linux_adapter_find_index_by_type(ad_type=inv)
+                if self.ad == -1:
+                    print(f'error, cannot find any BLE adapter')
+                    sys.exit(1)
+                print(f'warning, fallback to using {inv} BLE adapter')
 
 
     def _rx_cb(self, _: BleakGATTCharacteristic, bb: bytearray):
