@@ -215,8 +215,11 @@ class LoggerBle:
         self.rx = bytes()
         self.tag = ''
         self.cli = None
+        # adapter as None makes Bleak auto-detect
         self.ad = None
+        # setting ad_type allows us to force it
         if platform.system() == 'Linux':
+            print(f'BLE: Linux OS, trying to force adapter init to {ad_type}')
             self.ad = ble_linux_adapter_find_index_by_type(ad_type=ad_type)
             if  self.ad == -1:
                 print(f'BLE: adapter, warning, cannot find {ad_type}')
@@ -268,7 +271,7 @@ class LoggerBle:
             await self.cli.start_notify(UUID_T, self._rx_cb)
             mac = dev.address
             el = int(time.perf_counter() - el)
-            pm(f"connected to {mac} in {el} seconds")
+            pm(f"connected to device {mac} in {el} seconds")
             _gui_notification(f'connected to {mac} in {el} seconds')
             return True
         except (Exception, ) as ex:
@@ -296,7 +299,7 @@ class LoggerBle:
 
             await self.cli.start_notify(UUID_T, self._rx_cb)
             el = int(time.perf_counter() - el)
-            pm(f"connected to {mac} in {el} seconds")
+            pm(f"connected to mac {mac} in {el} seconds")
             _gui_notification(f'connected to {mac} in {el} seconds')
             return True
         except (Exception, ) as ex:
