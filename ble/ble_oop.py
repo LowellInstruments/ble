@@ -219,13 +219,13 @@ class LoggerBle:
         if platform.system() == 'Linux':
             self.ad = ble_linux_adapter_find_index_by_type(ad_type=ad_type)
             if  self.ad == -1:
-                print(f'error, cannot find {ad_type} BLE adapter')
+                print(f'BLE: adapter, warning, cannot find {ad_type}')
                 inv = 'external' if ad_type == 'internal' else 'external'
                 self.ad = ble_linux_adapter_find_index_by_type(ad_type=inv)
                 if self.ad == -1:
-                    print(f'error, cannot find any BLE adapter')
+                    print(f'BLE: error, cannot find any adapter')
                     sys.exit(1)
-                print(f'warning, fallback to using {inv} BLE adapter')
+                print(f'BLE: adapter, warning, falling back to {inv}')
 
 
     def _rx_cb(self, _: BleakGATTCharacteristic, bb: bytearray):
