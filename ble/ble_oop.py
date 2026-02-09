@@ -108,6 +108,7 @@ async def ble_scan_fast_any_mac_in_list(
     # just tell, do not act here
     ls_macs_wanted = [i.upper() for i in ls_macs_wanted]
     for mtf in ls_macs_wanted:
+        # bluetoothctl works with uppercase mac addresses
         if ble_linux_logger_is_this_mac_connected(mtf):
             pm(f'error, scan_fast_any_mac_in_list a mac that is already connected')
             return None
@@ -219,7 +220,7 @@ class LoggerBle:
         self.ad = None
         # setting ad_type allows us to force it
         if platform.system() == 'Linux':
-            print(f'BLE: Linux OS, trying to force adapter init to {ad_type}')
+            print(f'BLE: Linux OS, using  {ad_type} in constructor')
             self.ad = ble_linux_adapter_find_index_by_type(ad_type=ad_type)
             if  self.ad == -1:
                 print(f'BLE: adapter, warning, cannot find {ad_type}')
