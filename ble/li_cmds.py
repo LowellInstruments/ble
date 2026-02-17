@@ -1,3 +1,8 @@
+import pathlib
+import platform
+
+
+
 FIRMWARE_VERSION_CMD = 'GFV'
 CALIBRATION_CMD = 'RHS'
 INTERVAL_TIME_CMD = 'GIT'
@@ -63,3 +68,5 @@ FIRST_DEPLOYMENT_GET_CMD = 'FDG'
 
 # alternative to redis so we don't have to import it
 DEV_SHM_DL_PROGRESS = '/tmp/ble_dl_progress'
+if platform.system() == 'Windows':
+    DEV_SHM_DL_PROGRESS = pathlib.Path.home() / 'Downloads' / 'ble_dl_progress'
