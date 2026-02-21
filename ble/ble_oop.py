@@ -57,10 +57,17 @@ def set_print_cmd_flow(b: bool):
 
 def pm(s, color=''):
     s = f'{p_mod}: {s}'
-    if not color:
-        print(s)
-    elif color == 'green':
+    if color == 'green':
         print(f"\033[92m{s}\033[00m")
+    elif color == 'red':
+        print(f"\033[91m{s}\033[00m")
+    elif color == 'blue':
+        print(f"\033[96m{s}\033[00m")
+    elif color == 'yellow':
+        print(f"\033[93m{s}\033[00m")
+    else:
+        print(s)
+
 
 
 
@@ -1398,100 +1405,3 @@ class LoggerBle:
     #     if ok:
     #         return 0, rv
     #     return 1, bytes()
-
-
-
-
-async def main_ble_tdo():
-
-    # n = input('enter TDO board number you want to test -> ')
-    # d = {
-    #     '0': "F0:5E:CD:25:92:F1",
-    #     '1': "F0:5E:CD:25:A1:16",
-    #     '3': "F0:5E:CD:25:92:95"
-    # }
-    # mac = d[n]
-    # print(f'testing TDO #{n}, mac = {mac}')
-
-
-    mac = "F0:5E:CD:25:92:9D"
-    print(f'searching mac {mac}')
-
-
-    dev = await ble_scan_fast_one_mac(mac)
-    print(dev)
-
-
-    lc = LoggerBle()
-
-
-    # if not dev:
-    #     pm(f'error, not found {mac} during scan')
-    #     return
-    #
-    rv = await lc.ble_connect_by_dev(dev)
-    if not rv:
-        return
-
-    rv = await lc.cmd_gin()
-    print('GIN', rv)
-
-
-    # g = ("-3.333333", "-4.444444", None, None)
-    await lc.ble_disconnect()
-
-
-
-
-
-async def main_ble_ctd():
-
-    # n = input('enter CTD board number you want to test -> ')
-    # d = {
-    #     '1': "F0:5E:CD:25:92:EA",
-    #     '2': "F0:5E:CD:25:95:E0",
-    #     '3': "F0:5E:CD:25:95:D4",
-    #     '4': "F0:5E:CD:25:A4:21",
-    #     '5': "F0:5E:CD:25:A1:30"
-    # }
-    # mac = d[n]
-
-    mac = "F0:5E:CD:25:95:D4"    # CTD JOAQUIM
-    # print(f'testing CTD #{n}, mac = {mac}')
-
-
-    # ls_dev = await scan()
-    # pm(ls_dev)
-
-    dev = await ble_scan_fast_one_mac(mac)
-    print(dev)
-
-    if not dev:
-        pm(f'error, not found {mac} during scan')
-        return
-
-    lc = LoggerBle()
-
-    rv = await lc.ble_connect_by_dev(dev)
-    if not rv:
-        return
-
-    await lc.cmd_frm()
-
-    # await self.cmd_wli('SN2222222')
-    # await self.cmd_stm()
-    # await self.cmd_fds()
-    # await self.cmd_dns('LAB')
-    # g = ("-3.333333", "-4.444444", None, None)
-    # await self.cmd_rws(g)
-
-    for i in range(10900):
-        rv = await lc.cmd_gsc()
-        pm(f'GSC = {rv}')
-        time.sleep(1)
-
-
-
-    await lc.ble_disconnect()
-
-
