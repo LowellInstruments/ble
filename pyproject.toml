@@ -8,6 +8,7 @@ name = "ble"
 version = "0.1.1"
 description = "BLE library for Lowell Instruments"
 dependencies = [
-    "bleak",
-    "humanize"
+    "bleak~=1.0",
+    "humanize",
+    "cacheout"
 ]

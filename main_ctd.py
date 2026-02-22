@@ -17,8 +17,8 @@ CH = Cache(maxsize=300, ttl=3600, timer=time.time)
 
 def is_in_smart_lock_out(dev):
     # dev: bleak BLEDevice: dev.address, dev.name
-    return False
-    # return ch.get(dev.address)
+    # return False
+    return CH.get(dev.address)
 
 
 
@@ -222,8 +222,11 @@ async def main_ble_ctd():
     # download all filtered devices
     for i in ls:
         if is_in_smart_lock_out(i):
-            print(f'{i.name} is in smart lock out')
+            print(f'{i.name} is in smart lock out, refreshing')
+            CH.set(i.address, 1)
+
         else:
+            # gps position
             g = ("-3.333333", "-4.444444", None, None)
             await download_logger(i, g)
 
