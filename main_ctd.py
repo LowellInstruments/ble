@@ -11,7 +11,7 @@ os.system('clear')
 if platform.system() == 'Linux':
     ble_linux_logger_disconnect_all()
 FOL = pathlib.Path.home() / 'Downloads'
-# cachout is in memory, redis can be more persistent
+# cacheout is in-memory, redis can be made persistent
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
 
 
@@ -71,7 +71,7 @@ async def download_logger(dev, g):
 
 
 
-    # disable logger uart logs for lower power consumption
+    # disable logger's UART logs for lower power consumption
     rv, v = await lc.cmd_log()
     _rae(rv, "log command 1")
     if v != 0:
@@ -118,7 +118,7 @@ async def download_logger(dev, g):
 
 
 
-        # convert file to  CSV
+        # convert LID data file to CSV
         if p.endswith('.lid'):
             with contextlib.redirect_stdout(None):
                 rv = parse_lid_v2_data_file(p)
@@ -141,7 +141,7 @@ async def download_logger(dev, g):
 
 
 
-    # check sensor Temperature
+    # get sensor Temperature
     rv = await lc.cmd_gst()
     _rae(not rv or rv[0] == 1 or rv[1] == 0xFFFF or rv[1] == 0,
          "temperature sensor")
@@ -149,7 +149,7 @@ async def download_logger(dev, g):
 
 
 
-    # check sensor Pressure
+    # get sensor Pressure
     rv = await lc.cmd_gsp()
     _rae(not rv or rv[0] == 1 or rv[1] == 0xFFFF or rv[1] == 0,
          "pressure sensor")
@@ -157,7 +157,7 @@ async def download_logger(dev, g):
 
 
 
-    # check sensor conductivity
+    # get sensor conductivity
     if 'CTD' in dev.name:
         rv = await lc.cmd_gsc()
         _rae(not rv or rv[0] == 1 or rv[1] == 0xFFFF or rv[1] == 0,
@@ -192,25 +192,24 @@ async def download_logger(dev, g):
 
 async def main_ble_ctd():
 
-    # get list (dev, adv_name) of all the BLE devices around
-    pm('scanning for BLE devices...', color='blue')
+    # scan and get list (dev, adv_name) of all BLE devices around
+    pm('scanning for devices...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
         timeout=SCAN_TIMEOUT_SECS
     )
-    pm(f'found {len(d)} BLE devices', color='blue')
 
 
 
-    # filter by only LI devices
-    ls = [v[0] for k,v in d.items() if UUID_S in v[1].service_uuids]
-    pm(f'filtered down to {len(ls)} LI loggers', color='blue')
+    # dictionary scan results to list of BLEDevice: dev.address, dev.name
+    ls = [v[0] for k,v in d.items()]
+    pm(f'found {len(ls)} BLE devices', color='blue')
 
 
 
     # filter by only CTD devices
     logger_prefix = 'TDO'
-    ls = [i for i in ls if logger_prefix in i.name]
+    ls = [i for i in ls if i.name and logger_prefix in i.name]
     if not ls:
         pm('no LI loggers found', 'yellow')
         return
@@ -219,10 +218,12 @@ async def main_ble_ctd():
 
 
 
-    # download all filtered devices
+    # download filtered LI CTD devices not in smart lock-out
+    n_slo = CH.size()
     for i in ls:
         if is_in_smart_lock_out(i):
-            print(f'{i.name} is in smart lock out, refreshing')
+            t = int(CH.get_ttl(i.address) or 1)
+            pm(f'smart lock-out ({n_slo}) contains {i.name} ({t} secs), refreshing')
             CH.set(i.address, 1)
 
         else:
