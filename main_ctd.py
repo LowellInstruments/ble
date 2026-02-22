@@ -1,5 +1,4 @@
 import contextlib
-import pathlib
 from ble.ble_linux import ble_linux_logger_disconnect_all
 from ble.ble_oop import *
 import os
@@ -9,9 +8,10 @@ from cacheout import Cache
 
 
 os.system('clear')
-# ble_linux_logger_disconnect_all()
-fol = pathlib.Path.home() / 'Downloads'
-ch = Cache(maxsize=300, ttl=3600, timer=time.time)
+if platform.system() == 'Linux':
+    ble_linux_logger_disconnect_all()
+FOL = pathlib.Path.home() / 'Downloads'
+CH = Cache(maxsize=300, ttl=3600, timer=time.time)
 
 
 
@@ -41,6 +41,7 @@ async def download_logger(dev, g):
     _rae(not rv, f'cannot connect {dev.name} ({dev.address})')
 
 
+
     # get the status logger is in when we meet it
     rv, v = await lc.cmd_sts()
     _rae(rv, f'cannot get status {dev.name}')
@@ -55,10 +56,12 @@ async def download_logger(dev, g):
 
 
 
-
     # logger time
+    rv, v = await lc.cmd_utm()
+    _rae(rv, f'cannot get uptime')
+    pm(rv, f'logger uptime = {v}')
     rv, v = await lc.cmd_gtm()
-    _rae(rv, f'cannot get time from {dev.name}')
+    _rae(rv, f'cannot get time')
     pm(f'logger time was {v}')
     rv = await lc.cmd_stm()
     _rae(rv, f'cannot set time to {dev.name}')
@@ -76,7 +79,7 @@ async def download_logger(dev, g):
 
 
 
-    # get list of files inside the logger
+    # get list of files in logger file-system
     rv, d = await lc.cmd_dir()
     _rae(rv, "dir error " + str(rv))
     if d:
@@ -97,20 +100,17 @@ async def download_logger(dev, g):
             continue
 
 
-        # target file to download
+        # target file to download and download it
         pm(f"downloading file {file_name}", color='blue')
         rv = await lc.cmd_dwg(file_name)
         _rae(rv, "dwg")
-
-
-        # download file
         rv, file_data = await lc.cmd_dwl(int(file_size))
         _rae(rv, "dwl")
 
 
 
         # save file in our local disk path
-        p = str(pathlib.Path(fol / file_name))
+        p = str(pathlib.Path(FOL / file_name))
         with open(p, "wb") as f:
             f.write(file_data)
         n_dl += 1
@@ -127,13 +127,13 @@ async def download_logger(dev, g):
 
 
 
-    # check we got all files locally
+    # check we have all logger files locally
     _rae(n_dl != len(d), 'could not download all files')
 
 
 
     # all downloaded, format file-system
-    await asyncio.sleep(1)
+    await asyncio.sleep(.5)
     rv = await lc.cmd_frm()
     _rae(rv, "frm")
     pm("logger file-system formatted OK")
@@ -177,9 +177,12 @@ async def download_logger(dev, g):
     pm("run OK", color='green')
 
 
-    # add to smart lock-out
-    ch.set(dev.address, 1)
 
+    # add to smart lock-out
+    CH.set(dev.address, 1)
+
+
+    # BLE disconnect from this logger
     await lc.ble_disconnect()
 
 
@@ -188,7 +191,7 @@ async def download_logger(dev, g):
 
 async def main_ble_ctd():
 
-    # get a list (dev, adv_name) of all the BLE devices around
+    # get list (dev, adv_name) of all the BLE devices around
     print('\n\n\n')
     pm('scanning for BLE devices...', color='blue')
     d = await ble_scan_slow_with_adv_data(
@@ -211,7 +214,8 @@ async def main_ble_ctd():
     if not ls:
         pm('no LI loggers found', 'yellow')
         return
-    pm(f'filtered down to {len(ls)} {logger_prefix} loggers', color='blue')
+    pm(f'filtered down to {len(ls)} {logger_prefix} loggers',
+       color='blue')
 
 
 
@@ -231,5 +235,9 @@ if __name__ == '__main__':
     while 1:
         try:
             asyncio.run(main_ble_ctd())
+
+            # time for doing something else
+            time.sleep(2)
+
         except (Exception, ) as e:
             pm(f'exception {e}', color='red')
