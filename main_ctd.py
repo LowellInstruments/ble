@@ -4,18 +4,21 @@ from ble.ble_linux import ble_linux_logger_disconnect_all
 from ble.ble_oop import *
 import os
 from lix.lix import parse_lid_v2_data_file
+from cacheout import Cache
 
 
 
 os.system('clear')
 # ble_linux_logger_disconnect_all()
 fol = pathlib.Path.home() / 'Downloads'
+ch = Cache(maxsize=300, ttl=3600, timer=time.time)
 
 
 
 def is_in_smart_lock_out(dev):
     # dev: bleak BLEDevice: dev.address, dev.name
     return False
+    # return ch.get(dev.address)
 
 
 
@@ -95,7 +98,7 @@ async def download_logger(dev, g):
 
 
         # target file to download
-        pm(f"downloading file {file_name}")
+        pm(f"downloading file {file_name}", color='blue')
         rv = await lc.cmd_dwg(file_name)
         _rae(rv, "dwg")
 
@@ -130,10 +133,10 @@ async def download_logger(dev, g):
 
 
     # all downloaded, format file-system
-    await asyncio.sleep(.1)
+    await asyncio.sleep(1)
     rv = await lc.cmd_frm()
     _rae(rv, "frm")
-    pm("memory formatted OK")
+    pm("logger file-system formatted OK")
 
 
 
@@ -174,6 +177,9 @@ async def download_logger(dev, g):
     pm("run OK", color='green')
 
 
+    # add to smart lock-out
+    ch.set(dev.address, 1)
+
     await lc.ble_disconnect()
 
 
@@ -183,6 +189,7 @@ async def download_logger(dev, g):
 async def main_ble_ctd():
 
     # get a list (dev, adv_name) of all the BLE devices around
+    print('\n\n\n')
     pm('scanning for BLE devices...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
@@ -210,7 +217,9 @@ async def main_ble_ctd():
 
     # download all filtered devices
     for i in ls:
-        if not is_in_smart_lock_out(i):
+        if is_in_smart_lock_out(i):
+            print(f'{i.name} is in smart lock out')
+        else:
             g = ("-3.333333", "-4.444444", None, None)
             await download_logger(i, g)
 
@@ -219,7 +228,8 @@ async def main_ble_ctd():
 
 
 if __name__ == '__main__':
-    try:
-        asyncio.run(main_ble_ctd())
-    except (Exception, ) as e:
-        pm(f'exception {e}', color='red')
+    while 1:
+        try:
+            asyncio.run(main_ble_ctd())
+        except (Exception, ) as e:
+            pm(f'exception {e}', color='red')
