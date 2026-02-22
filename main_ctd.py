@@ -11,7 +11,8 @@ os.system('clear')
 if platform.system() == 'Linux':
     ble_linux_logger_disconnect_all()
 FOL = pathlib.Path.home() / 'Downloads'
-CH = Cache(maxsize=300, ttl=3600, timer=time.time)
+# cachout is in memory, redis can be more persistent
+CH = Cache(maxsize=300, ttl=120, timer=time.time)
 
 
 
@@ -192,7 +193,7 @@ async def download_logger(dev, g):
 async def main_ble_ctd():
 
     # get list (dev, adv_name) of all the BLE devices around
-    print('\n\n\n')
+    print('\n\n\n\n\n')
     pm('scanning for BLE devices...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
