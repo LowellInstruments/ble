@@ -60,7 +60,7 @@ async def download_logger(dev, g):
     # logger time
     rv, v = await lc.cmd_utm()
     _rae(rv, f'cannot get uptime')
-    pm(rv, f'logger uptime = {v}')
+    pm(f'logger uptime = {v}')
     rv, v = await lc.cmd_gtm()
     _rae(rv, f'cannot get time')
     pm(f'logger time was {v}')
@@ -193,7 +193,6 @@ async def download_logger(dev, g):
 async def main_ble_ctd():
 
     # get list (dev, adv_name) of all the BLE devices around
-    print('\n\n\n\n\n')
     pm('scanning for BLE devices...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
@@ -240,7 +239,8 @@ if __name__ == '__main__':
         try:
             asyncio.run(main_ble_ctd())
 
-            # time for doing something else
+            # time to do something else
+            print('\n\n\n')
             time.sleep(2)
 
         except (Exception, ) as e:
