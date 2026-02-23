@@ -40,6 +40,7 @@ async def download_logger(dev, g):
     lc = LoggerBle()
     rv = await lc.ble_connect_by_dev(dev)
     _rae(not rv, f'cannot connect {dev.name} ({dev.address})')
+    pm(f'working with logger {dev.name}')
 
 
 
@@ -98,10 +99,11 @@ async def download_logger(dev, g):
         if file_size == 0:
             rv = await lc.cmd_del(file_name)
             _rae(rv, "del")
+            n_dl += 1
             continue
 
 
-        # target file to download and download it
+        # target file to download and do it
         pm(f"downloading file {file_name}", color='blue')
         rv = await lc.cmd_dwg(file_name)
         _rae(rv, "dwg")
@@ -179,7 +181,7 @@ async def download_logger(dev, g):
 
 
 
-    # add to smart lock-out
+    # add the logger just downloaded to smart lock-out
     CH.set(dev.address, 1)
 
 
@@ -192,7 +194,7 @@ async def download_logger(dev, g):
 
 async def main_ble_ctd():
 
-    # scan and get list (dev, adv_name) of all BLE devices around
+    # scan and get list (dev, adv_name) of ALL BLE devices around
     pm('scanning for devices...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
@@ -201,29 +203,28 @@ async def main_ble_ctd():
 
 
 
-    # dictionary scan results to list of BLEDevice: dev.address, dev.name
+    # dictionary scan results as list of BLEDevice: dev.address, dev.name
     ls = [v[0] for k,v in d.items()]
     pm(f'found {len(ls)} BLE devices', color='blue')
 
 
 
-    # filter by only CTD devices
-    logger_prefix = 'TDO'
-    ls = [i for i in ls if i.name and logger_prefix in i.name]
+    # filter by only <logger_type> devices
+    logger_type = 'TDO'
+    ls = [i for i in ls if i.name and logger_type in i.name]
     if not ls:
         pm('no LI loggers found', 'yellow')
         return
-    pm(f'filtered down to {len(ls)} {logger_prefix} loggers',
+    pm(f'filtered down to {len(ls)} {logger_type} loggers',
        color='blue')
 
 
 
     # download filtered LI CTD devices not in smart lock-out
-    n_slo = CH.size()
     for i in ls:
         if is_in_smart_lock_out(i):
             t = int(CH.get_ttl(i.address) or 1)
-            pm(f'smart lock-out ({n_slo}) contains {i.name} ({t} secs), refreshing')
+            pm(f'smart lock-out ({CH.size()}) contains {i.name} ({t} secs), refreshing')
             CH.set(i.address, 1)
 
         else:
