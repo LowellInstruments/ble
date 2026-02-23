@@ -30,6 +30,11 @@ def _rae(cond_error, s):
 
 
 
+# - - - - - - - - - - - - - - - - - - - - - -
+# stop logger, get its LID, GPS files,
+# convert them and disconnect
+# - - - - - - - - - - - - - - - - - - - - - -
+
 async def download_logger(dev, g):
 
     # output separator
@@ -191,6 +196,10 @@ async def download_logger(dev, g):
 
 
 
+# - - - - - - - - - - - - - - - - - - - - - -
+# scan for <logger_type> loggers and
+# call the download function
+# - - - - - - - - - - - - - - - - - - - - - -
 
 async def main_ble_ctd():
 
@@ -235,6 +244,9 @@ async def main_ble_ctd():
 
 
 
+# - - - - -
+# entry
+# - - - - -
 
 if __name__ == '__main__':
     while 1:
