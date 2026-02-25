@@ -5,10 +5,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ble"
-version = "0.1.1"
+version = "0.1.2"
 description = "BLE library for Lowell Instruments"
 dependencies = [
     "bleak~=1.0",
     "humanize",
     "cacheout"
 ]
+
+[project.scripts]
+main_ctd = "ble.main_ctd:main"
+
+
+[tool.setuptools.packages.find]
+# when you do extra "src" folder put it here
+where = ["."]
+
+

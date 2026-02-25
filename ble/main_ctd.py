@@ -4,6 +4,8 @@ from ble.ble_oop import *
 import os
 from lix.lix import parse_lid_v2_data_file
 from cacheout import Cache
+import inspect
+
 
 
 
@@ -13,13 +15,14 @@ if platform.system() == 'Linux':
 FOL = pathlib.Path.home() / 'Downloads'
 # cacheout is in-memory, redis can be made persistent
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
+g_iterations = 0
 
 
 
 def is_in_smart_lock_out(dev):
     # dev: bleak BLEDevice: dev.address, dev.name
-    # return False
-    return CH.get(dev.address)
+    return False
+    # return CH.get(dev.address)
 
 
 
@@ -204,7 +207,7 @@ async def download_logger(dev, g):
 async def main_ble_ctd():
 
     # scan and get list (dev, adv_name) of ALL BLE devices around
-    pm('scanning for devices...', color='blue')
+    pm(f'Scanning for devices ...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
         timeout=SCAN_TIMEOUT_SECS
@@ -248,14 +251,26 @@ async def main_ble_ctd():
 # entry
 # - - - - -
 
-if __name__ == '__main__':
+def main():
+
+    global g_iterations
+    g_iterations = 0
+    fn = inspect.currentframe().f_code.co_name
+
     while 1:
         try:
+            pm(f"Run #{g_iterations} of {fn}", color='blue')
             asyncio.run(main_ble_ctd())
 
             # time to do something else
             print('\n\n\n')
             time.sleep(2)
+            g_iterations += 1
 
         except (Exception, ) as e:
             pm(f'exception {e}', color='red')
+
+
+
+if __name__ == '__main__':
+    main()
