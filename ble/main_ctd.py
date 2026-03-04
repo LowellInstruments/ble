@@ -17,14 +17,16 @@ FOL = pathlib.Path.home() / 'Downloads'
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
 g_iterations = 0
 LS_MACS_WE_WANT = ['F0:5E:CD:25:95:D2']
+USING_SMART_LOCK_OUT = True
 
 
 
 
 def is_in_smart_lock_out(dev):
     # dev: bleak BLEDevice: dev.address, dev.name
-    return False
-    # return CH.get(dev.address)
+    if not USING_SMART_LOCK_OUT:
+        return False
+    return CH.get(dev.address)
 
 
 
@@ -191,7 +193,7 @@ async def download_logger(dev, g):
 
 
 
-    # add the logger just downloaded to smart lock-out
+    # add logger just downloaded to smart lock-out, TTL in cache declaration
     CH.set(dev.address, 1)
 
 
@@ -245,7 +247,8 @@ async def main_ble_ctd():
     for i in ls:
         if is_in_smart_lock_out(i):
             t = int(CH.get_ttl(i.address) or 1)
-            pm(f'smart lock-out ({CH.size()}) contains {i.name} ({t} secs), refreshing')
+            pm(f'smart lock-out ({CH.size()}) contains {i.name}, {i.address} ({t} secs), refreshing')
+            # TTL in cache declaration
             CH.set(i.address, 1)
 
         else:
