@@ -16,6 +16,8 @@ FOL = pathlib.Path.home() / 'Downloads'
 # cacheout is in-memory, redis can be made persistent
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
 g_iterations = 0
+LS_MACS_WE_WANT = ['F0:5E:CD:25:95:D2']
+
 
 
 
@@ -76,7 +78,7 @@ async def download_logger(dev, g):
     rv = await lc.cmd_stm()
     _rae(rv, f'cannot set time to {dev.name}')
     dt = datetime.datetime.fromtimestamp(time.time(), tz=timezone.utc)
-    pm(f'logger time set {dt.strftime('%Y/%m/%d %H:%M:%S')}')
+    pm(f"logger time set {dt.strftime('%Y/%m/%d %H:%M:%S')}")
 
 
 
@@ -207,7 +209,7 @@ async def download_logger(dev, g):
 async def main_ble_ctd():
 
     # scan and get list (dev, adv_name) of ALL BLE devices around
-    pm(f'Scanning for devices ...', color='blue')
+    pm(f'Scanning for devices during {SCAN_TIMEOUT_SECS} seconds ...', color='blue')
     d = await ble_scan_slow_with_adv_data(
         adapter='',
         timeout=SCAN_TIMEOUT_SECS
@@ -227,8 +229,15 @@ async def main_ble_ctd():
     if not ls:
         pm('no LI loggers found', 'yellow')
         return
-    pm(f'filtered down to {len(ls)} {logger_type} loggers',
+    pm(f'filtered down to {logger_type} loggers = {len(ls)}',
        color='blue')
+
+
+
+    # filter by the macs we want to download
+    ls = [i for i in ls if i.address in LS_MACS_WE_WANT]
+    pm(f'filtered down to wanted loggers = {len(ls)}', color='blue')
+
 
 
 

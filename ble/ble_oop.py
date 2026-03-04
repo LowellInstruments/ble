@@ -227,7 +227,7 @@ class LoggerBle:
         self.ad = None
         # setting ad_type allows us to force it
         if platform.system() == 'Linux':
-            print(f'BLE: Linux OS, using  {ad_type} in constructor')
+            print(f'BLE: Linux OS, using {ad_type} adapter in constructor')
             self.ad = ble_linux_adapter_find_index_by_type(ad_type=ad_type)
             if  self.ad == -1:
                 print(f'BLE: adapter, warning, cannot find {ad_type}')
