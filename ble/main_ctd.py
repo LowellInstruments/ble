@@ -16,7 +16,7 @@ FOL = pathlib.Path.home() / 'Downloads'
 # cacheout is in-memory, redis can be made persistent
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
 g_iterations = 0
-LS_MACS_WE_WANT = ['F0:5E:CD:25:95:D2']
+LS_MACS_WE_WANT = ['F0:5E:CD:25:A2:03']
 USING_SMART_LOCK_OUT = True
 
 
