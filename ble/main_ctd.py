@@ -16,7 +16,7 @@ FOL = pathlib.Path.home() / 'Downloads'
 # cacheout is in-memory, redis can be made persistent
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
 g_iterations = 0
-LS_MACS_WE_WANT = ['F0:5E:CD:25:A2:03']
+LS_MACS_WE_WANT = ['F0:5E:CD:25:95:D2']
 USING_SMART_LOCK_OUT = True
 
 
@@ -84,7 +84,7 @@ async def download_logger(dev, g):
 
 
 
-    # disable logger's UART logs for lower power consumption
+    # enable / disable logger's UART logs for power consumption
     rv, v = await lc.cmd_log()
     _rae(rv, "log command 1")
     if v != 0:
@@ -184,6 +184,26 @@ async def download_logger(dev, g):
     rv = await lc.cmd_wak('on')
     _rae(rv, "wake mode")
     pm('wake mode ON')
+
+
+    # change to one second interval
+    d = {
+        'PFM': "00000",
+        'SPN': "00001",
+        'SPT': "00001",
+        'DRO': "00002",
+        'DRU': "00002",
+        'DRF': "00001",
+        'DSO': "03600",
+        'DSU': "00060"
+    }
+    for k, v in d.items():
+        rv = await lc.cmd_scf(k, v)
+        if rv:
+            print(f'error scf tag {k}')
+        else:
+            print(f'scf tag {k} OK')
+
 
 
 
