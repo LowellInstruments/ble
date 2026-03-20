@@ -8,3 +8,7 @@
 
         Added a main to download loggers
         Done pyproject.toml better
+
+0.1.3   03 / 20 / 26
+
+        reset BLE progress download file in command DWG

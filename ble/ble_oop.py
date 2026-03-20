@@ -634,7 +634,11 @@ class LoggerBle:
     async def cmd_dwg(self, s):
         c, _ = _build_cmd(DWG_FILE_CMD, s)
         rv = await self.cmd(c)
-        return 0 if rv == b'DWG 00' else 1
+        if rv == b'DWG 00':
+            with open(DEV_SHM_DL_PROGRESS, 'w') as f:
+                f.write('0')
+            return 0
+        return 1
 
 
 
@@ -701,55 +705,6 @@ class LoggerBle:
         if rv == 0:
             with open(DEV_SHM_DL_PROGRESS, 'w') as f:
                 f.write('100')
-        return rv, self.rx
-
-
-
-    # download a file in FAST mode
-    # does NOT use function cmd()
-    async def cmd_dwf(self, file_size) -> tuple:
-
-        # prepare variables pre-DWF
-        self.rx = bytes()
-        # r_set()
-        last_n = 0
-        el = time.perf_counter()
-        with open(DEV_SHM_DL_PROGRESS, 'w') as f:
-            f.write('0')
-        pm(f'DWF receiving file {file_size} bytes long')
-        await self.cli.write_gatt_char(UUID_R, b'DWF \r')
-
-
-        # receive whole file
-        while 1:
-            if not self.is_connected():
-                pm('error, DWF disconnected while receiving file')
-                return 1, bytes()
-
-            # don't print progress too often or screws download timing
-            await asyncio.sleep(1)
-            n = len(self.rx)
-            # pm('DWF progress', '{:5.2f} %'.format(100 * n / file_size))
-            # r_set()
-
-            # share DL progress with other guys interested in it
-            with open(DEV_SHM_DL_PROGRESS, 'w') as f:
-                v = '{:5.2f}'.format(100 * len(self.rx) / file_size)
-                f.write(str(v))
-
-            if n == last_n or n == file_size:
-                break
-            last_n = n
-
-
-        # report download result
-        rv = 0 if n == file_size else 1
-        if rv:
-            pm(f'error, DWF received {n} bytes vs file_size {file_size}')
-        else:
-            el = int(time.perf_counter()) - el
-            pm('DWF download OK!', color='green')
-            pm(f'DWF speed {(file_size / el) / 1000} KB/s')
         return rv, self.rx
 
 
