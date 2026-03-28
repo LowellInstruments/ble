@@ -149,7 +149,14 @@ def ble_linux_logger_was_any_left_connected():
     # see left connected stuff
     c = 'bluetoothctl info'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-    for lg_type in ('DO-1', 'DO-2', 'TAP1', 'TDO', 'DO1', 'DO2'):
+    for lg_type in (
+        'DO-1',
+        'DO-2',
+        'TAP1',
+        'TDO',
+        'DO1',
+        'DO2',
+        'CTD'):
         b = '\tName: {}'.format(lg_type).encode()
         if b in rv.stdout:
             return 1
