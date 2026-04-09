@@ -12,8 +12,12 @@ from bleak import BleakClient, BleakScanner, BLEDevice
 from bleak.backends.characteristic import BleakGATTCharacteristic
 import humanize
 import subprocess as sp
-from .ble_linux import ble_linux_logger_is_this_mac_connected, ble_linux_adapter_find_internal_index, \
-    ble_linux_adapter_find_index_by_type
+from .ble_linux import (
+    ble_linux_logger_is_this_mac_connected,
+    ble_linux_adapter_find_internal_index,
+    ble_linux_adapter_find_index_by_type,
+    ble_linux_adapter_find_external_index
+)
 from .li_cmds import *
 
 
@@ -218,25 +222,31 @@ def _build_cmd(*args):
 
 
 class LoggerBle:
-    def __init__(self, ad_type='internal'):
-        assert(ad_type in ['internal', 'external'])
+    def __init__(self, prefer_internal=False):
         self.rx = bytes()
         self.tag = ''
         self.cli = None
-        # adapter as None makes Bleak auto-detect
+        # None auto-detects in all platforms
         self.ad = None
-        # setting ad_type allows us to force it
+
+        # ----------------------------------------------
+        # force adapter or None makes Bleak auto-detect
+        # ----------------------------------------------
+
+        # OS-specific things
         if platform.system() == 'Linux':
-            print(f'BLE: Linux OS, using {ad_type} adapter in constructor')
-            self.ad = ble_linux_adapter_find_index_by_type(ad_type=ad_type)
-            if  self.ad == -1:
-                print(f'BLE: adapter, warning, cannot find {ad_type}')
-                inv = 'external' if ad_type == 'internal' else 'external'
-                self.ad = ble_linux_adapter_find_index_by_type(ad_type=inv)
-                if self.ad == -1:
-                    print(f'BLE: error, cannot find any adapter')
-                    sys.exit(1)
-                print(f'BLE: adapter, warning, falling back to {inv}')
+            idx_ad_i = ble_linux_adapter_find_internal_index()
+            idx_ad_e = ble_linux_adapter_find_external_index()
+            if idx_ad_i == idx_ad_e == -1:
+                print(f'BLE: error, cannot find any adapter')
+                sys.exit(1)
+            # prefer external by default
+            idx_ad = idx_ad_e if idx_ad_e != -1 else idx_ad_i
+            if prefer_internal:
+                idx_ad = idx_ad_i if idx_ad_i != -1 else idx_ad_e
+            self.ad = f'hci{idx_ad}'
+            print(f'BLE: Linux OS, using adapter {self.ad} in constructor')
+
 
 
     def _rx_cb(self, _: BleakGATTCharacteristic, bb: bytearray):
