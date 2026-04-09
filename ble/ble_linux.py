@@ -23,27 +23,6 @@ def ble_linux_adapter_reset_by_index(i: int):
 
 
 
-def ble_linux_adapter_is_it_up_by_index(i: int):
-    for _ in range(10):
-        cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
-        rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-        if rv.returncode == 0:
-            return 0
-        time.sleep(.1)
-    return 1
-
-
-
-def ble_linux_adapter_get_type_by_index(i) -> str:
-    # probe external ones first
-    c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
-    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
-    if rv == 0:
-        return 'external'
-    return 'internal'
-
-
-
 def ble_linux_adapter_enumerate_all_of_them() -> dict:
     d = {}
     for i in range(10):
@@ -55,6 +34,30 @@ def ble_linux_adapter_enumerate_all_of_them() -> dict:
 
 
 
+# returns bool or 0, adapter is NOT up
+def ble_linux_adapter_is_it_up_by_index(i: int) -> int:
+    for _ in range(10):
+        cr = f"hciconfig hci{i} | grep 'UP RUNNING'"
+        rv = sp.run(cr, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+        if rv.returncode == 0:
+            return 0
+        time.sleep(.1)
+    return 1
+
+
+
+# returns type 'external' or 'internal' from integer index
+def ble_linux_adapter_get_type_by_index(i) -> str:
+    # probe external ones first
+    c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
+    rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
+    if rv == 0:
+        return 'external'
+    return 'internal'
+
+
+
+# returns integer index from app name
 def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
 
     # we assume:
@@ -104,7 +107,7 @@ def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
 
 
 
-
+# returns integer index from type
 def ble_linux_adapter_find_index_by_type(ad_type: str) -> int:
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
