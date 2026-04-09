@@ -58,18 +58,15 @@ def ble_linux_adapter_get_type_by_index(i) -> str:
 
 
 # returns integer index from app name
-def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
+def ble_linux_adapter_find_best_index_by_app(app, only_lat=False) -> int:
 
-    # we assume:
-    #   DDH = lowest  external interface or internal
-    #   BIX = lowest  external interface or internal
-    #   LAT = highest external interface
-
+    # LAT = highest external interface so DDH has the lowest
     app = app.upper()
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
     if rv.returncode:
         _pm(f'error, ble_linux_adapter_find_best_index_by_app {app}')
+        # we don't even have one interface
         return -1
 
     n = int(rv.stdout.decode())
@@ -83,26 +80,27 @@ def ble_linux_adapter_find_best_index_by_app(app, single=False) -> int:
 
 
     if app == 'LAT':
-        if single:
+        if only_lat:
             # LAT is running without DDH
             if ls_e:
                 return ls_e[-1]
-            _pm(f'error, ble_linux_find_best_interface_index for {app}, single, no external ')
+            _pm(f'error, ble_linux_find_best_interface_index for {app}, only_lat, no external ')
             return -1
 
         # LAT not single, so we will need at least 2 external
         if n < 3:
-            _pm(f'error, ble_linux_find_best_interface_index for {app}, not_single, few external')
+            _pm(f'error, ble_linux_find_best_interface_index for {app}, only_lat, few external')
             return -1
         return ls_e[-1]
 
-    # BIX and DDH get the immediately after 0
+    # rest of apps prefer external
     if ls_e:
         return ls_e[0]
 
+    # fallback to internal
     if ls_i:
         return ls_i[0]
-    _pm(f'error, ble_linux_find_best_interface_index for {app}, single = {single}')
+    _pm(f'error, ble_linux_find_best_interface_index for {app}, only_lat = {only_lat}')
     return -1
 
 
