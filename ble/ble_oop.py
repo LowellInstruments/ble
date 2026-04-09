@@ -16,7 +16,7 @@ from .ble_linux import (
     ble_linux_logger_is_this_mac_connected,
     ble_linux_adapter_find_internal_index,
     ble_linux_adapter_find_index_by_type,
-    ble_linux_adapter_find_external_index
+    ble_linux_adapter_find_external_index, ble_linux_get_bluez_version, ble_linux_adapter_get_type_by_index
 )
 from .li_cmds import *
 
@@ -245,7 +245,8 @@ class LoggerBle:
             if prefer_internal:
                 idx_ad = idx_ad_i if idx_ad_i != -1 else idx_ad_e
             self.ad = f'hci{idx_ad}'
-            print(f'BLE: Linux OS, using adapter {self.ad} in constructor')
+            ad_type = ble_linux_adapter_get_type_by_index(idx_ad)
+            print(f'BLE: Linux OS, using {ad_type} adapter ({self.ad}) in constructor')
 
 
 
