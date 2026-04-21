@@ -321,6 +321,7 @@ class LoggerBle:
             pm(f"connected to mac {mac} in {el} seconds")
             _gui_notification(f'connected to {mac} in {el} seconds')
             return True
+
         except (Exception, ) as ex:
             pm(f'error, connect {ex}')
 
@@ -373,6 +374,7 @@ class LoggerBle:
             'GLT',
             'GSA',
             'GSC',
+            'GSI',
             'GSP',
             'GST',
             'GTM',
@@ -397,6 +399,7 @@ class LoggerBle:
             'SCF',
             'SLA',
             'SPN',
+            'SSI',
             'SSP',
             'STM',
             STOP_CMD,
@@ -1246,6 +1249,25 @@ class LoggerBle:
             state = _[rv.split(b' ')[1]]
             return 0, state
         return 1, 'error'
+
+
+
+    # get logger sub_info
+    async def cmd_gsi(self):
+        rv = await self.cmd('GSI \r')
+        ok = rv and rv.startswith(b'GSI')
+        if ok:
+            return 0, rv.decode()[6:]
+        return 1, 'error'
+
+
+
+    # set logger sub info
+    async def cmd_ssi(self, s):
+        c, _ = _build_cmd('SSI', s)
+        rv = await self.cmd(c, timeout=10)
+        ok = rv == b'SSI 00'
+        return 0 if ok else 1
 
 
 
