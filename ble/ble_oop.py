@@ -904,7 +904,7 @@ class LoggerBle:
     async def cmd_gsc(self):
         # rv: GSC 101234567890ABCDEF
         rv = await self.cmd('GSC \r')
-        print('gsc rv', rv)
+        # print('gsc rv', rv)
         ok = rv and (len(rv) == 22 or len(rv) == 14) and rv.startswith(b'GSC')
         if not ok:
             return 1, 0
