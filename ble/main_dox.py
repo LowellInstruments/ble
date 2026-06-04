@@ -13,7 +13,7 @@ os.system('clear')
 if platform.system() == 'Linux':
     ble_linux_logger_disconnect_all()
 FOL = pathlib.Path.home() / 'Downloads'
-LS_MACS_WE_WANT = ['F0:5E:CD:25:9E:06']
+LS_MACS_WE_WANT = ["D0:2E:AB:D9:29:1F"]
 
 
 
@@ -70,7 +70,7 @@ async def download_logger(dev, g):
 
 
 
-async def main_ble_tdo():
+async def main_ble_dox():
 
     # scan and get list (dev, adv_name) of ALL BLE devices around
     pm(f'Scanning for devices during {SCAN_TIMEOUT_SECS} seconds ...', color='blue')
@@ -88,8 +88,8 @@ async def main_ble_tdo():
 
 
     # filter by only <logger_type> devices
-    logger_type = 'TDO'
-    ls = [i for i in ls if i.name and logger_type in i.name]
+    logger_type = 'DO'
+    ls = [i for i in ls if i.name and i.name.startswith('DO')]
     if not ls:
         pm('no LI loggers found', 'yellow')
         return
@@ -112,4 +112,4 @@ async def main_ble_tdo():
 
 
 if __name__ == '__main__':
-    asyncio.run(main_ble_tdo())
+    asyncio.run(main_ble_dox())
