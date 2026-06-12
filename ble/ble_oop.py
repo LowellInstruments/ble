@@ -364,6 +364,7 @@ class LoggerBle:
             'FRM',
             'GAB',
             'GCC',
+            'GCA',
             'GCQ',
             'GCI',
             'GCF',
@@ -809,6 +810,20 @@ class LoggerBle:
             pm(f'error, bad GCC length {len(rv)} - 6 != {n} - 6')
         else:
             pm(f'error, bad GCC length = None')
+        return 1, ""
+
+
+
+    # Get Conductivity ADC Constants
+    async def cmd_gca(self):
+        rv = await self.cmd('GCA \r')
+        ok = rv and len(rv) == 22 and rv.startswith(b'GCA')
+        if ok:
+            return 0, rv.decode()
+        if rv:
+            pm(f'error, bad GCA length {len(rv)}')
+        else:
+            pm(f'error, bad GCA length = None')
         return 1, ""
 
 
