@@ -15,4 +15,8 @@
 
 0.1.4   03/28/26
 
-    pyproject.toml removed setuptools find packages    
+    pyproject.toml removed setuptools find packages
+
+0.1.5   07/14/26
+
+    increased DWL command timeout

@@ -657,7 +657,6 @@ class LoggerBle:
 
 
 
-    # download a file in SLOW mode
     # does NOT use function cmd()
     async def cmd_dwl(self, file_size) -> tuple:
 
@@ -698,7 +697,8 @@ class LoggerBle:
 
             # download using DWL command (~7 KB/s when no connection update)
             ok = 0
-            for _ in range(40):
+            for _ in range(80):
+                # 40 * .05 is 2 seconds but it once timeout'ed on Ben
                 await asyncio.sleep(.05)
                 if len(self.rx) == (i + 1) * 2048:
                     # next chunk
