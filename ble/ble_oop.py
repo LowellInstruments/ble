@@ -1,5 +1,4 @@
 import platform
-
 import asyncio
 import datetime
 import json
@@ -16,7 +15,9 @@ from .ble_linux import (
     ble_linux_logger_is_this_mac_connected,
     ble_linux_adapter_find_internal_index,
     ble_linux_adapter_find_index_by_type,
-    ble_linux_adapter_find_external_index, ble_linux_get_bluez_version, ble_linux_adapter_get_type_by_index
+    ble_linux_adapter_find_external_index,
+    ble_linux_get_bluez_version,
+    ble_linux_adapter_get_type_by_index
 )
 from .li_cmds import *
 
@@ -288,13 +289,17 @@ class LoggerBle:
             await asyncio.sleep(.5)
     
             await self.cli.start_notify(UUID_T, self._rx_cb)
-            mac = dev.address
+            if platform.system() == 'Darwin':
+                # this in fact is a UUID
+                mac = dev
+            else:
+                mac = dev.address
             el = int(time.perf_counter() - el)
             pm(f"connected to device {mac} in {el} seconds")
             _gui_notification(f'connected to {mac} in {el} seconds')
             return True
         except (Exception, ) as ex:
-            pm(f'error, connect {ex}')
+            pm(f'error, connect by dev {ex}')
 
 
 
@@ -323,7 +328,7 @@ class LoggerBle:
             return True
 
         except (Exception, ) as ex:
-            pm(f'error, connect {ex}')
+            pm(f'error, connect by mac {ex}')
 
 
 
