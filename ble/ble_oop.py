@@ -412,6 +412,7 @@ class LoggerBle:
             'STS',
             SWS_CMD,
             'TST',
+            'SSV',
             'UTM',
             'WAK',
             'WAT',
@@ -1203,6 +1204,14 @@ class LoggerBle:
         c, _ = _build_cmd('SCC', f'{tag}{v}')
         rv = await self.cmd(c, timeout=30)
         return 0 if rv == b'SCC 00' else 1
+
+
+
+    # Set Sensor Value for simulation purposes
+    async def cmd_ssv(self, v):
+        c, _ = _build_cmd('SSV', f'{v}')
+        rv = await self.cmd(c, timeout=30)
+        return 0 if rv == b'SSV 00' else 1
 
 
 
