@@ -157,6 +157,7 @@ def ble_linux_logger_was_any_left_connected():
         'TDO',
         'DO1',
         'DO2',
+        'PH1',
         'CTD'):
         b = '\tName: {}'.format(lg_type).encode()
         if b in rv.stdout:

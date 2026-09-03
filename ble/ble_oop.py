@@ -378,6 +378,7 @@ class LoggerBle:
             'GEC',
             'GFV',
             'GLT',
+            'GPH',
             'GSA',
             'GSC',
             'GSI',
@@ -913,7 +914,7 @@ class LoggerBle:
     # get logger type
     async def cmd_glt(self):
         rv = await self.cmd('GLT \r')
-        ok = rv and rv in (b'GLT DO1', b'GLT DO2', b'GLT TDO', b'GLT CTD')
+        ok = rv and rv in (b'GLT DO1', b'GLT DO2', b'GLT TDO', b'GLT CTD', b'GLT PH1')
         # rv: b'ERR' in loggers not supporting this command
         if ok:
             return 0, rv.decode()[-3:]
@@ -927,6 +928,18 @@ class LoggerBle:
         rv = await self.cmd('GSC \r')
         # print('gsc rv', rv)
         ok = rv and (len(rv) == 22 or len(rv) == 14) and rv.startswith(b'GSC')
+        if not ok:
+            return 1, 0
+        return 0, rv[6:]
+
+
+
+    # Get Sensor ph
+    async def cmd_gph(self):
+        # rv: GSC 0890ABCDEF
+        rv = await self.cmd('GPH \r')
+        # print('gph rv', rv)
+        ok = rv and len(rv) == 14 and rv.startswith(b'GPH')
         if not ok:
             return 1, 0
         return 0, rv[6:]

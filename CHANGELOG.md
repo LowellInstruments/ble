@@ -20,3 +20,7 @@
 0.1.5   07/14/26
 
     increased DWL command timeout
+
+0.1.6   09/03/26
+
+    added ph loggers support
