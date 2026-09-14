@@ -17,13 +17,11 @@ g_d_names = {
 
 
 
+console = console.Console()
 UUID_R = 'f0001131-0451-4000-b000-000000000000'
 UUID_T = 'f0001132-0451-4000-b000-000000000000'
 g_d_mac_to_lc = dict()
 g_d_mac_to_ael = dict()
-g_ael = None
-g_lc = None
-console = console.Console()
 g_bb = bytes()
 
 
@@ -66,6 +64,7 @@ async def async_ble_disconnect(mac: str):
     lc_already_existed = do_we_have_lc(mac)
     if not lc_already_existed:
         return
+    console.print(f'<- disconnect {g_d_names[mac]}', style='bold blue')
     lc = get_lc(mac)
     await lc.disconnect()
 
@@ -139,12 +138,13 @@ async def async_ble_send_cmd_to_mac(mac: str, cmd: str) -> int:
 
 
 def ble_cmd(mac: str, cmd: str) -> int:
+    global g_bb
+    g_bb = bytes()
     return get_ael(mac).run_until_complete(async_ble_send_cmd_to_mac(mac, cmd))
 
 
 
 def ble_disconnect(mac: str):
-    console.print(f'<- disconnect {g_d_names[mac]}', style='bold blue')
     return get_ael(mac).run_until_complete(async_ble_disconnect(mac))
 
 
