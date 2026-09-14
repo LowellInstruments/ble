@@ -23,4 +23,8 @@
 
 0.1.6   09/03/26
 
-    added ph loggers support
+    added ph loggers support with instructions GPH
+
+0.1.7   09/14/26
+
+    added main_parallel example for faster logger interactions
