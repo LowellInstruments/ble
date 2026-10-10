@@ -1,3 +1,4 @@
+import platform
 import subprocess as sp
 import time
 
@@ -9,6 +10,8 @@ def _pm(s):
 
 
 def ble_linux_get_bluez_version() -> str:
+    if platform.system() == 'Darwin':
+        return '5.90'
     c = 'bluetoothctl -v'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
     v = rv.stdout.decode()
