@@ -241,6 +241,7 @@ class LoggerBle:
             if idx_ad_i == idx_ad_e == -1:
                 print(f'BLE: error, cannot find any adapter')
                 sys.exit(1)
+
             # prefer external by default
             idx_ad = idx_ad_e if idx_ad_e != -1 else idx_ad_i
             if prefer_internal:
@@ -924,9 +925,8 @@ class LoggerBle:
 
     # Get Sensor Conductivity
     async def cmd_gsc(self):
-        # rv: GSC 101234567890ABCDEF
+        # rv: GSC 0809000300
         rv = await self.cmd('GSC \r')
-        # print('gsc rv', rv)
         ok = rv and (len(rv) == 22 or len(rv) == 14) and rv.startswith(b'GSC')
         if not ok:
             return 1, 0

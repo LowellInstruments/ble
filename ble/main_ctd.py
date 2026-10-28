@@ -16,7 +16,7 @@ FOL = pathlib.Path.home() / 'Downloads'
 # cacheout is in-memory, redis can be made persistent
 CH = Cache(maxsize=300, ttl=120, timer=time.time)
 g_iterations = 0
-LS_MACS_WE_WANT = ['F0:5E:CD:25:95:D2']
+LS_MACS_WE_WANT = ["F0:5E:CD:25:9A:AC"]
 USING_SMART_LOCK_OUT = True
 
 
@@ -53,7 +53,13 @@ async def download_logger(dev, g):
     rv = await lc.ble_connect_by_dev(dev)
     _rae(not rv, f'cannot connect {dev.name} ({dev.address})')
     pm(f'working with logger {dev.name}')
-
+    
+    
+    # --------------remote this
+    rv = await lc.cmd_gcc()
+    print('rv', rv)
+    await lc.ble_disconnect()
+    return
 
 
     # get the status logger is in when we meet it
@@ -246,7 +252,7 @@ async def main_ble_ctd():
 
 
     # filter by only <logger_type> devices
-    logger_type = 'TDO'
+    logger_type = 'CTD'
     ls = [i for i in ls if i.name and logger_type in i.name]
     if not ls:
         pm('no LI loggers found', 'yellow')
@@ -275,8 +281,6 @@ async def main_ble_ctd():
             # gps position
             g = ("-3.333333", "-4.444444", None, None)
             await download_logger(i, g)
-
-
 
 
 # - - - - -

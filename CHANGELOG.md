@@ -27,4 +27,8 @@
 
 0.1.7   09/14/26
 
-    added main_parallel example for faster logger interactions
+    added example "main_parallel.py" for faster logger interactions
+
+0.1.8   10/28/26
+
+    added support for external USB dongle TechKey with chipset Realtek

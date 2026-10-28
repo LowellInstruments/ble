@@ -30,6 +30,7 @@ def ble_linux_adapter_enumerate_all_of_them() -> dict:
         rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
         if rv == 0:
             d[i] = ble_linux_adapter_get_type_by_index(i)
+            # print(f'hci{i} is of type {d[i]}')
     return d
 
 
@@ -48,8 +49,8 @@ def ble_linux_adapter_is_it_up_by_index(i: int) -> int:
 
 # returns type 'external' or 'internal' from integer index
 def ble_linux_adapter_get_type_by_index(i) -> str:
-    # probe external ones first
-    c = f'hciconfig -a hci{i} | grep Manufacturer | grep Cambridge'
+    # probe external ones first -> Cambridge: RED UD100, Realtek: BLACK Techkey
+    c = f'hciconfig -a hci{i} | grep Manufacturer | grep -e Cambridge -e Realtek'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE).returncode
     if rv == 0:
         return 'external'
@@ -105,7 +106,7 @@ def ble_linux_adapter_find_best_index_by_app(app, only_lat=False) -> int:
 
 
 
-# returns integer index from type
+# returns FIRST OCCURRENCE index from type
 def ble_linux_adapter_find_index_by_type(ad_type: str) -> int:
     c = 'hciconfig -a | grep Primary | wc -l'
     rv = sp.run(c, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -114,11 +115,10 @@ def ble_linux_adapter_find_index_by_type(ad_type: str) -> int:
         return -1
 
     # n: how many adapters this linux machine has
-    n = int(rv.stdout.decode())
-    ls = list(range(n))
-    ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == ad_type]
-    if ls_i:
-        return ls_i[0]
+    ls = list(range(5))
+    ls = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == ad_type]
+    if ls:
+        return ls[0]
     return -1
 
 
