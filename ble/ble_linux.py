@@ -78,7 +78,7 @@ def ble_linux_adapter_find_best_index_by_app(app, only_lat=False) -> int:
         # we only have one interface
         return 0
 
-    ls = list(range(n))
+    ls = list(range(5))
     ls_i = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'internal']
     ls_e = [i for i in ls if ble_linux_adapter_get_type_by_index(i) == 'external']
 
