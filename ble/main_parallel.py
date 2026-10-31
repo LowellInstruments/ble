@@ -61,15 +61,6 @@ def _rx_cb(_: BleakGATTCharacteristic, bb: bytearray):
 
 
 
-async def _async_ble_disconnect(mac: str):
-    lc_already_existed = _lc_does_it_exist(mac)
-    if not lc_already_existed:
-        return
-    console.print(f'<- disconnect {g_d_names[mac]}', style='bold blue')
-    lc = _lc_get(mac)
-    await lc.disconnect()
-
-
 
 async def _async_ble_smart_sleep(cmd: str):
 
@@ -143,6 +134,16 @@ async def _async_ble_send_cmd_to_mac(mac: str, cmd: str) -> int:
 
 
 
+async def _async_ble_disconnect(mac: str):
+    lc_already_existed = _lc_does_it_exist(mac)
+    if not lc_already_existed:
+        return
+    console.print(f'<- disconnect {g_d_names[mac]}', style='bold blue')
+    lc = _lc_get(mac)
+    await lc.disconnect()
+
+
+
 
 # this is NOT async
 def ble_cmd(mac: str, cmd: str) -> int:
@@ -173,6 +174,7 @@ def main():
     for c in ls_cmd:
         ble_cmd(mac_do2, c)
         ble_cmd(mac_ctd, c)
+    # todo: maybe do ble_disconnect a command inside ble_cmd for more parallellism
     ble_disconnect(mac_do2)
     ble_disconnect(mac_ctd)
 
