@@ -92,6 +92,7 @@ async def _async_ble_smart_sleep(cmd: str):
 
 
 
+
 async def _async_ble_send_cmd_to_mac(mac: str, cmd: str) -> int:
 
     # ----------------------------------
@@ -130,6 +131,8 @@ async def _async_ble_send_cmd_to_mac(mac: str, cmd: str) -> int:
     console.print(f"<- {cmd.replace(' \r', '')} to {g_d_names[mac]}", style='bold yellow')
     await lc.write_gatt_char(UUID_R, cmd.encode())
     await _async_ble_smart_sleep(cmd)
+
+    # todo: maybe analyze the command answer here
     return 0
 
 
